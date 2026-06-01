@@ -3,14 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { supabase } from '../supabaseClient'; // 👈 แก้ไข Path ถอย 1 ก้าวเพื่อให้อ้างอิงจากโฟลเดอร์ src ได้ถูกต้อง
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 const LOCKOUT_MS = LOCKOUT_MINUTES * 60 * 1000;
 const RL_KEY = 'rl_login';
-
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyk4q1W5Q1JrQohhZRwT_6PTWxQwj0ydgdM3BjadDqXkywxNkQLWApRSAMHntA5xKnQ4Q/exec";
-const SECRET_KEY  = "8642ef1ceffd67950e24180bb1b11a9241f686bfe57288abc3b7b6ef91018e9e";
 
 function getRateLimit() {
   try {
@@ -69,79 +67,77 @@ const Login = () => {
     setIsLoading(true);
     Swal.fire({
       title: 'กำลังตรวจสอบข้อมูล...',
-      allowOutsideClick: false, showConfirmButton: false,
-      padding: '2em', width: 'auto', backdrop: 'rgba(0,0,0,0.4)',
+      allowOutsideClick: false, 
+      showConfirmButton: false,
+      padding: '2em', 
+      width: 'auto', 
+      backdrop: 'rgba(0,0,0,0.4)',
       didOpen: () => { Swal.showLoading(); },
     });
 
     try {
-      // 1. ตรวจสอบการเข้าสู่ระบบ
-      const response = await fetch(WEB_APP_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'login', username, password, secretKey: SECRET_KEY }),
-      });
+      // 🕵️‍♂️ 1. ตรวจสอบการเข้าสู่ระบบผ่านตาราง users
+      // ✅ แก้แล้ว
+const { data: userData, error: userError } = await supabase
+  .from('students')                                              // ← แก้
+  .select('username, first_name, last_name, phone, category, level, password') // ← แก้
+  .eq('username', username)
+  .eq('password', password)
+  .maybeSingle();
 
-      const dataText = await response.text();
-      let result;
-      try { result = JSON.parse(dataText); }
-      catch { throw new Error('รูปแบบข้อมูลจากเซิร์ฟเวอร์ไม่ถูกต้อง'); }
+if (userError) throw userError;
 
-      if (result.status === 'success') {
-        resetRateLimit();
+if (userData) {
+  resetRateLimit();
 
-        // 2. บันทึกข้อมูลส่วนตัวลง localStorage ทันทีเพื่อความเร็ว
-        localStorage.setItem('userName',      result.data.username  || '');
-        localStorage.setItem('userFirstName', result.data.firstName || '');
-        localStorage.setItem('userLastName',  result.data.lastName  || '');
-        localStorage.setItem('userPhone',     result.data.phone     || '');
-        localStorage.setItem('userMajor',     result.data.category  || '');
-        localStorage.setItem('userLevel',     result.data.level     || '');
-        localStorage.setItem('isLoggedIn',    'true');
-        sessionStorage.setItem('isLoggedIn',  'true');
+  localStorage.setItem('userName',      userData.username   || '');
+  localStorage.setItem('userFirstName', userData.first_name || ''); // ← แก้
+  localStorage.setItem('userLastName',  userData.last_name  || ''); // ← แก้
+  localStorage.setItem('userPhone',     userData.phone      || '');
+  localStorage.setItem('userMajor',     userData.category   || '');
+  localStorage.setItem('userLevel',     userData.level      || '');
+  localStorage.setItem('isLoggedIn',    'true');
+  sessionStorage.setItem('isLoggedIn',  'true');
 
-        // 3. 🔥 [ลัดคิว] ดึงข้อมูลรายวิชาทันทีโดยไม่ต้องรอให้อนิเมชัน Swal แสดงเสร็จ
-        const fetchEnrollmentsPromise = fetch(WEB_APP_URL, {
-          method:  'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action:    'getEnrollments',
-            secretKey: SECRET_KEY,
-            username:  result.data.username
-          })
-        }).then(res => res.json())
-          .then(enrollData => {
-            if (enrollData.status === 'success') {
-              localStorage.setItem('registeredCourses', JSON.stringify(enrollData.courseIds));
-            } else {
-              localStorage.setItem('registeredCourses', JSON.stringify([]));
-            }
-          })
-          .catch(err => {
-            console.warn('getEnrollments failed:', err);
-            localStorage.setItem('registeredCourses', JSON.stringify([]));
-          });
+  // ✅ ดึง enrollments แบบแนวตั้ง (course_id) ให้ตรงกับ structure จริง
+  const fetchEnrollmentsPromise = supabase
+    .from('enrollments')
+    .select('course_id')
+    .eq('username', userData.username)
+    .then(({ data: enrollData, error: enrollError }) => {
+      if (!enrollError && enrollData) {
+        const courseIds = enrollData.map(item => item.course_id);
+        localStorage.setItem('registeredCourses', JSON.stringify(courseIds));
+      } else {
+        localStorage.setItem('registeredCourses', JSON.stringify([]));
+      }
+    })
+    .catch(err => {
+      console.warn('getEnrollments failed:', err);
+      localStorage.setItem('registeredCourses', JSON.stringify([]));
+    });
 
-        // 4. แสดงผลสำเร็จสั้นลง (600ms) และพ่วงเอาขั้นตอนทำงานทั้งหมดวิ่งไปพร้อมกัน
+        // 4. 🎉 แสดงผลสำเร็จรวดเร็ว (450ms) บินเข้าสู่ระบบทันที
         Swal.fire({
           icon: 'success',
           title: 'เข้าสู่ระบบสำเร็จ!',
-          html: `ยินดีต้อนรับ <b>${result.data.firstName}</b>`,
+          html: `ยินดีต้อนรับ <b>${userData.first_name}</b>`,
           showConfirmButton: false,
-          timer: 600, // ⚡️ ปรับลดเวลาลงจาก 1000ms เพื่อความลื่นไหล
+          timer: 450, 
           timerProgressBar: true,
           backdrop: 'rgba(0,0,0,0.4)',
         }).then(async () => {
-          // รอให้โหลดวิชาเสร็จ (ถ้าดึงเสร็จก่อนหน้านี้แล้ว จะผ่านตรงนี้ไปทันทีโดยไม่เสียเวลาเพิ่ม)
-          await fetchEnrollmentsPromise; 
+          // ตัวป้องกันการค้างกรณีเครือข่ายดีเลย์
+          await Promise.race([
+            fetchEnrollmentsPromise,
+            new Promise(resolve => setTimeout(resolve, 400))
+          ]);
           
-          // เปลี่ยนหน้าทันที
           navigate('/courses', { replace: true });
         });
 
       } else {
-        // ฝั่งกรอกรหัสผิดคงเดิมเพื่อความปลอดภัย
-        const current    = getRateLimit();
+        const current     = getRateLimit();
         const newAttempts = (current.attempts || 0) + 1;
         const remaining   = MAX_ATTEMPTS - newAttempts;
 
@@ -155,7 +151,8 @@ const Login = () => {
         }
       }
     } catch (error) {
-      Swal.fire({ icon: 'warning', title: 'การเชื่อมต่อมีปัญหา', text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง', confirmButtonColor: '#f59e0b', confirmButtonText: 'รับทราบ', backdrop: 'rgba(0,0,0,0.4)' });
+      console.error("⚡ Connection Error:", error.message);
+      Swal.fire({ icon: 'warning', title: 'การเชื่อมต่อมีปัญหา', text: `ไม่สามารถติดต่อฐานข้อมูลได้ (${error.message})`, confirmButtonColor: '#f59e0b', confirmButtonText: 'รับทราบ', backdrop: 'rgba(0,0,0,0.4)' });
     } finally {
       setIsLoading(false);
     }

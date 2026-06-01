@@ -3,18 +3,17 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { courses, categories, levels } from "./data/courses"; 
 import Navbar from "./components/Navbar";
+import Swal from "sweetalert2"; // สำหรับใช้แสดง Alert ตอนกดลงทะเบียนด่วน
+import { supabase } from "./supabaseClient"; // 🔥 นำเข้าตัวเชื่อมต่อ Supabase ของเรา
 
 export default function CoursesPage() {
   const navigate = useNavigate(); 
   
-  // ตรวจสอบสถานะการเข้าสู่ระบบ
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
   const userLevel = localStorage.getItem('userLevel') || ""; 
-  // eslint-disable-next-line no-unused-vars
-  const userMajor = localStorage.getItem('userMajor') || ""; 
+  const username = localStorage.getItem('userName') || ""; 
 
   const [activeCategory, setActiveCategory] = useState("all");
-  // ตั้งค่าเริ่มต้นให้ปุ่มระดับชั้น โฟกัสไปที่ชั้นของนักเรียนทันที (ถ้ายังไม่ล็อกอินให้เป็น "all")
   const [activeLevel, setActiveLevel] = useState(isLoggedIn ? userLevel : "all"); 
   const [hoveredId, setHoveredId] = useState(null);
   const [search, setSearch] = useState("");
@@ -22,39 +21,103 @@ export default function CoursesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // 📝 รายชื่อวิชาที่นักเรียน "ลงทะเบียนแล้ว" เก็บไว้ใน State (ดึงมาจาก localStorage)
   const [registeredCourses, setRegisteredCourses] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(null); // เก็บ ID วิชาที่กำลังกดลงทะเบียนแบบด่วน
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [activeCategory, activeLevel, search]);
 
-  // ดึงข้อมูลวิชาที่เคยลงทะเบียนไว้ตอนเปิดหน้าเว็บ เพื่อเอาไปเปลี่ยนสีและข้อความปุ่ม
+  // 🔄 ของใหม่: ดึงรายวิชาที่เด็กคนนี้เคยลงทะเบียนไว้จากตาราง enrollments ใน Supabase
   useEffect(() => {
-    if (isLoggedIn) {
-      const savedReg = localStorage.getItem('registeredCourses');
-      if (savedReg) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setRegisteredCourses(JSON.parse(savedReg));
+    const fetchRegisteredCourses = async () => {
+      if (isLoggedIn && username) {
+        try {
+          const { data, error } = await supabase
+            .from("enrollments")
+            .select("course_id")
+            .eq("username", username); // เช็คเฉพาะแถวที่เป็นของเด็กคนนี้
+
+          if (error) throw error;
+
+          if (data) {
+            // แปลงรูปแบบจากข้อมูล [{course_id: "health-safety"}] ให้เป็นรูปแบบ Array สั้นๆ ["health-safety"]
+            const courseIds = data.map((item) => item.course_id);
+            setRegisteredCourses(courseIds);
+            localStorage.setItem('registeredCourses', JSON.stringify(courseIds));
+          }
+        } catch (err) {
+          console.error("Error fetching enrollments from Supabase:", err.message);
+        }
       }
+    };
+
+    fetchRegisteredCourses();
+  }, [isLoggedIn, username]);
+
+  // 📝 ของใหม่: ฟังก์ชันสำหรับการลงทะเบียนเรียนด่วนลง Supabase
+  const handleQuickRegister = async (e, course) => {
+    e.stopPropagation(); // หยุดการกระจาย Event ไม่ให้ทะลุไปโดนคลิกของการ์ด
+
+    if (!isLoggedIn) {
+      Swal.fire("กรุณาเข้าสู่ระบบ", "โปรดเข้าสู่ระบบก่อนทำการลงทะเบียนเรียนครับ", "warning");
+      return;
     }
-  }, [isLoggedIn]);
 
-  // 🌟 ปรับปรุงจุดนี้: ปลดล็อกสาขาออก เพื่อให้ทุกคนมองเห็นวิชาทั้งหมดและเลือกลงทะเบียนได้อิสระ
+    Swal.fire({
+      icon: "question",
+      title: "ยืนยันการลงทะเบียน?",
+      html: `คุณต้องการลงทะเบียนเรียนในรายวิชา<br><b>${course.subject}</b> ใช่หรือไม่?`,
+      showCancelButton: true,
+      confirmButtonColor: "#10b981",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "ยืนยันลงทะเบียน",
+      cancelButtonText: "ยกเลิก"
+    }).then(async (result) => {
+      if (!result.isConfirmed) return;
+
+      setIsSubmitting(course.id);
+      try {
+        // 🔥 ยิงบันทึกข้อมูลลงตาราง enrollments ของ Supabase โดยตรง (บันทึกแบบแนวตั้ง)
+        const { error } = await supabase
+          .from("enrollments")
+          .insert([{ 
+  username: username,
+  course_id: course.id,
+  student_id: localStorage.getItem('userFirstName') + ' ' + localStorage.getItem('userLastName'),
+}]);
+
+        if (error) throw error;
+
+        // ถ้าบันทึกสำเร็จ -> อัปเดตสถานะที่หน้าจอและใน LocalStorage ทันที
+        const updatedReg = [...registeredCourses, course.id];
+        setRegisteredCourses(updatedReg);
+        localStorage.setItem('registeredCourses', JSON.stringify(updatedReg));
+        
+        Swal.fire({ 
+          icon: "success", 
+          title: "ลงทะเบียนสำเร็จ!", 
+          text: "ระบบบันทึกรายวิชาเรียนของคุณเรียบร้อยแล้ว", 
+          timer: 2000, 
+          showConfirmButton: false 
+        });
+
+      } catch (err) {
+        Swal.fire("เกิดข้อผิดพลาด", `ไม่สามารถลงทะเบียนได้: ${err.message}`, "error");
+      } finally {
+        setIsSubmitting(null);
+      }
+    });
+  };
+
   const allowedCourses = courses.filter((c) => {
-    if (!isLoggedIn) return true; // เห็นทั้งหมดถ้ายังไม่เข้าสู่ระบบ
-
-    // 1. ตรวจสอบระดับชั้น (สำหรับคนที่ล็อกอินแล้ว) - ยังคงล็อกไว้เพื่อให้เด็กเห็นวิชาที่ตรงระดับชั้นเรียนตัวเอง
+    if (!isLoggedIn) return true; 
     const matchLevel = !c.level || 
                        c.level === "all" || 
                        c.level === userLevel || 
                        (Array.isArray(c.level) && c.level.includes(userLevel));
-
-    // 2. ตรวจสอบสาขา: 🔓 ปลดล็อกออกโดยให้คืนค่า true เสมอ (ไม่ว่าเด็กจะอยู่สาขาไหน ก็ให้เห็นทุกวิชาของทุกสาขา)
-    const matchMajor = true; 
-
-    return matchLevel && matchMajor; 
+    return matchLevel; 
   });
 
   const allowedCategoryIds = new Set(allowedCourses.map(c => c.category));
@@ -62,10 +125,8 @@ export default function CoursesPage() {
   
   const visibleCategories = categories.filter(cat => allowedCategoryIds.has(cat.id));
 
-  // กรองข้อมูลสำหรับการแสดงผลผลลัพธ์บนหน้าจอตาม Sidebar และ Search
   const filtered = allowedCourses.filter((c) => {
     const matchCat = activeCategory === "all" || c.category === activeCategory;
-    
     const matchLevelFilter = activeLevel === "all" || 
                              c.level === activeLevel || 
                              (Array.isArray(c.level) && c.level.includes(activeLevel));
@@ -77,12 +138,10 @@ export default function CoursesPage() {
     return matchCat && matchLevelFilter && matchSearch;
   });
 
-  // ✅ ฟังก์ชันจัดการเมื่อคลิกปุ่ม (ส่งตัวไปหน้า CourseDetail เพื่อไปกดลงทะเบียนหรือเรียน)
   const handleCourseAction = (courseId) => {
     navigate(`/course/${courseId}`);
   };
 
-  // คำนวณตัดแบ่งข้อมูลหน้าเพจ
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -108,7 +167,6 @@ export default function CoursesPage() {
           </h1>
           <p style={{ fontSize: "clamp(14px, 2vw, 16px)", opacity: 0.9, marginBottom: 30 }}>เลือกเรียนได้ตามความสนใจ เรียนได้ทุกที่ ทุกเวลา</p>
 
-          {/* 🔍 Big Search Bar */}
           <div style={{ maxWidth: 600, margin: "0 auto", position: "relative", filter: "drop-shadow(0 10px 15px rgba(0,0,0,0.1))" }}>
             <input 
               type="text"
@@ -133,7 +191,7 @@ export default function CoursesPage() {
         }
         .lh-cat-btn { display: flex; width: 100%; padding: 10px 20px; border: none; background: none; cursor: pointer; align-items: center; gap: 10px; transition: 0.2s; font-family: inherit; }
         .lh-cat-btn.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
-        .lh-card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s; }
+        .lh-card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s; cursor: pointer; }
         .lh-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.08); }
       `}</style>
 
@@ -188,16 +246,16 @@ export default function CoursesPage() {
           <div className="lh-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
             {currentItems.map(course => {
               const hovered = hoveredId === course.id;
-              
-              // 🌟 เช็คสถานะการลงทะเบียนเรียนมาแสดงผลบนปุ่ม
               const isRegistered = registeredCourses.includes(course.id);
-              
-              // กำหนดสีปุ่มและข้อความตามสถานะการลงทะเบียนเรียน
-              const buttonBgColor = isRegistered ? course.color : "#10b981";
-              const buttonLabel = isRegistered ? "เข้าสู่ห้องเรียน →" : "📝 ดูรายละเอียดการลงทะเบียน";
 
               return (
-                <div key={course.id} className="lh-card" onMouseEnter={() => setHoveredId(course.id)} onMouseLeave={() => setHoveredId(null)}>
+                <div 
+                  key={course.id} 
+                  className="lh-card" 
+                  onMouseEnter={() => setHoveredId(course.id)} 
+                  onMouseLeave={() => setHoveredId(null)}
+                  onClick={() => handleCourseAction(course.id)}
+                >
                   <div style={{ height: 5, background: `linear-gradient(90deg,${course.color},${course.color}88)` }} />
 
                   <div style={{ padding: "20px 16px 15px", textAlign: "center" }}>
@@ -217,24 +275,98 @@ export default function CoursesPage() {
                   <div style={{ padding: "12px 16px 16px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
                     <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, flex: 1 }}>{course.description}</p>
                     
-                    {/* ปุ่มลิงก์เพื่อไปตัดสินใจลงทะเบียนในหน้า CourseDetail */}
-                    <button 
-                      onClick={() => handleCourseAction(course.id)} 
-                      style={{ 
-                        width: "100%", 
-                        padding: "9px", 
-                        borderRadius: 10, 
-                        border: "none", 
-                        background: hovered ? buttonBgColor : `${buttonBgColor}18`, 
-                        color: hovered ? "#fff" : buttonBgColor, 
-                        fontSize: 13, 
-                        fontWeight: 700, 
-                        cursor: "pointer", 
-                        transition: "all 0.2s" 
-                      }}
-                    >
-                      {buttonLabel}
-                    </button>
+                    {/* ── ส่วนจัดการปุ่มควบคุมด้านล่างการ์ด ── */}
+                    <div style={{ display: "flex", gap: 8, width: "100%" }}>
+                      {isRegistered ? (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleCourseAction(course.id); }} 
+                          style={{ 
+                            width: "100%", padding: "9px", borderRadius: 10, border: "none", 
+                            background: hovered ? course.color : `${course.color}18`, 
+                            color: hovered ? "#fff" : course.color, 
+                            fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" 
+                          }}
+                        >
+                          เข้าสู่ห้องเรียน →
+                        </button>
+                      ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, width: "100%" }}>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleCourseAction(course.id); }} 
+                            onMouseEnter={(e) => {
+                              e.target.style.background = "#f1f5f9";
+                              e.target.style.borderColor = "#94a3b8";
+                              e.target.style.color = "#1e293b";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = "#fff";
+                              e.target.style.borderColor = "#cbd5e1";
+                              e.target.style.color = "#64748b";
+                            }}
+                            style={{ 
+                              width: "100%",
+                              padding: "8px 4px", 
+                              borderRadius: 10, 
+                              border: "1px solid #cbd5e1", 
+                              background: "#fff", 
+                              color: "#64748b", 
+                              fontSize: "12px", 
+                              fontWeight: 600, 
+                              cursor: "pointer", 
+                              whiteSpace: "nowrap", 
+                              transition: "all 0.2s",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 2
+                            }}
+                          >
+                            🔍 รายละเอียด
+                          </button>
+                          
+                          <button 
+                            disabled={isSubmitting === course.id}
+                            onClick={(e) => handleQuickRegister(e, course)} 
+                            onMouseEnter={(e) => {
+                              if (isSubmitting !== course.id) {
+                                e.target.style.background = "#059669";
+                                e.target.style.transform = "translateY(-1px)";
+                                e.target.style.boxShadow = "0 4px 6px rgba(16,185,129,0.3)";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (isSubmitting !== course.id) {
+                                e.target.style.background = "#10b981";
+                                e.target.style.transform = "translateY(0)";
+                                e.target.style.boxShadow = "0 2px 4px rgba(16,185,129,0.2)";
+                              }
+                            }}
+                            style={{ 
+                              width: "100%",
+                              padding: "8px 4px", 
+                              borderRadius: 10, 
+                              border: "none", 
+                              background: "#10b981", 
+                              color: "#fff", 
+                              fontSize: "12px", 
+                              fontWeight: 700, 
+                              cursor: "pointer", 
+                              whiteSpace: "nowrap", 
+                              boxShadow: "0 2px 4px rgba(16,185,129,0.2)", 
+                              opacity: isSubmitting === course.id ? 0.6 : 1, 
+                              transition: "all 0.2s",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 2
+                            }}
+                          >
+                            {isSubmitting === course.id ? "กำลังบันทึก..." : "📝 ลงทะเบียน"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                   </div>
                 </div>
               );

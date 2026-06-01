@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { supabase } from "/src/supabaseClient"; // 👈 แก้ไขคำสะกดผิดเรียบร้อย
 
 // ============================================================
 // [SECURITY] Register rate limiting — ป้องกัน spam สมัครซ้ำ
@@ -88,21 +89,15 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    // [SECURITY] ตรวจ rate limit ก่อน
     const rl = getRegRL();
+    // eslint-disable-next-line react-hooks/purity
     if (rl.lockedUntil && Date.now() < rl.lockedUntil) {
+      // eslint-disable-next-line react-hooks/purity
       const mins = Math.ceil((rl.lockedUntil - Date.now()) / 60000);
-      Swal.fire({
-        icon: 'error',
-        title: 'ถูกล็อกชั่วคราว',
-        text: `พยายามสมัครสมาชิกบ่อยเกินไป กรุณารอ ${mins} นาที`,
-        confirmButtonColor: '#ef4444',
-        width: '350px',
-      });
+      Swal.fire({ icon: 'error', title: 'ถูกล็อกชั่วคราว', text: `พยายามสมัครสมาชิกบ่อยเกินไป กรุณารอ ${mins} นาที`, confirmButtonColor: '#ef4444', width: '350px' });
       return;
     }
 
-    // [SECURITY] Validate ฝั่ง client (server จะ validate ซ้ำอีกครั้ง)
     if (formData.username.length !== 13) {
       Swal.fire({ icon: 'warning', title: 'เลขบัตรประชาชนไม่ถูกต้อง', text: 'กรุณากรอกเลขบัตรประชาชนให้ครบ 13 หลัก', confirmButtonColor: '#1a73e8', width: '350px' });
       return;
@@ -119,7 +114,6 @@ const Register = () => {
       Swal.fire({ icon: 'warning', title: 'นามสกุลไม่ถูกต้อง', text: 'กรุณากรอกนามสกุลให้ถูกต้อง', confirmButtonColor: '#1a73e8', width: '350px' });
       return;
     }
-
     const passwordValid = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/.test(formData.password);
     if (!passwordValid) {
       Swal.fire({ icon: 'warning', title: 'รหัสผ่านไม่ถูกต้อง', html: 'รหัสผ่านต้องมี<b>อย่างน้อย 8 ตัวอักษร</b><br>และต้องมี<b>ตัวอังกฤษ</b>และ<b>ตัวเลข</b>ผสมกัน', confirmButtonColor: '#1a73e8', width: '350px' });
@@ -141,84 +135,90 @@ const Register = () => {
       didOpen: () => { Swal.showLoading(); },
     });
 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyk4q1W5Q1JrQohhZRwT_6PTWxQwj0ydgdM3BjadDqXkywxNkQLWApRSAMHntA5xKnQ4Q/exec"; // <-- เปลี่ยนเป็น URL ของคุณ
-
     try {
-      const response = await fetch(WEB_APP_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'register',
-          // ✅ ใส่ค่า Secret Key ที่ตรงกับใน Google Apps Script ของคุณลงไปตรงๆ
-          secretKey: "8642ef1ceffd67950e24180bb1b11a9241f686bfe57288abc3b7b6ef91018e9e", 
-          username: sanitize(formData.username),
-          firstName: sanitize(formData.firstName),
-          lastName: sanitize(formData.lastName),
+      const cleanUsername = sanitize(formData.username);
+
+      // ✅ เพิ่ม handle checkError
+      const { data: existingUser, error: checkError } = await supabase
+        .from('students')
+        .select('username')
+        .eq('username', cleanUsername)
+        .maybeSingle();
+
+      if (checkError) throw checkError; // ← เพิ่มบรรทัดนี้
+
+      if (existingUser) {
+        handleFailedAttempt('duplicate');
+        return;
+      }
+
+      const { error: insertError } = await supabase
+        .from('students')
+        .insert([{
+          username: cleanUsername,
+          first_name: sanitize(formData.firstName),
+          last_name: sanitize(formData.lastName),
           phone: sanitize(formData.phone),
-          password: formData.password, // ไม่ sanitize password เพราะอาจตัดอักขระที่ตั้งใจใช้
-          category: sanitize(formData.category),
+          password: formData.password,
           level: sanitize(formData.level),
-        }),
-      });
+          category: sanitize(formData.category),
+        }]);
 
-      const dataText = await response.text();
-      let result;
-      try {
-        result = JSON.parse(dataText);
-      } catch {
-        throw new Error('รูปแบบข้อมูลจากเซิร์ฟเวอร์ไม่ถูกต้อง');
-      }
+       if (insertError) throw insertError;
 
-      if (result.status === 'success') {
-        // [SECURITY] สมัครสำเร็จ → reset rate limit
-        resetRegRL();
-        Swal.fire({
-          icon: 'success',
-          title: 'สมัครสมาชิกสำเร็จ!',
-          text: 'ระบบกำลังพากลับไปหน้าเข้าสู่ระบบ',
-          timer: 1500,
-          timerProgressBar: true,
-          showConfirmButton: false,
-          width: '350px',
-          padding: '1.5em',
-          backdrop: 'rgba(0,0,0,0.4)',
-        }).then(() => navigate('/'));
-      } else {
-        // [SECURITY] นับ failed attempt
-        const current = getRegRL();
-        const newAttempts = (current.attempts || 0) + 1;
-        if (newAttempts >= REG_MAX) {
-          setRegRL({ attempts: newAttempts, lockedUntil: Date.now() + REG_LOCK_MS });
-        } else {
-          setRegRL({ attempts: newAttempts, lockedUntil: null });
-        }
+      // ✅ Auto-login หลังสมัครสำเร็จ
+      localStorage.setItem('userName',      cleanUsername);
+      localStorage.setItem('userFirstName', sanitize(formData.firstName));
+      localStorage.setItem('userLastName',  sanitize(formData.lastName));
+      localStorage.setItem('userPhone',     sanitize(formData.phone));
+      localStorage.setItem('userMajor',     sanitize(formData.category));
+      localStorage.setItem('userLevel',     sanitize(formData.level));
+      localStorage.setItem('isLoggedIn',    'true');
+      localStorage.setItem('registeredCourses', JSON.stringify([]));
+      sessionStorage.setItem('isLoggedIn',  'true');
 
-        // [SECURITY] แสดงเฉพาะ message ที่ปลอดภัย ไม่ expose server error
-        const safeMessages = {
-          'duplicate': 'เลขบัตรประชาชนนี้มีในระบบแล้ว',
-          'invalid': 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง',
-        };
-        const displayMsg = safeMessages[result.code] || 'ไม่สามารถสมัครสมาชิกได้ กรุณาลองใหม่อีกครั้ง';
-        Swal.fire({
-          icon: 'error',
-          title: 'สมัครไม่สำเร็จ',
-          text: displayMsg,
-          confirmButtonColor: '#d33',
-          width: '350px',
-        });
-      }
+      resetRegRL();
+      Swal.fire({
+        icon: 'success',
+        title: 'สมัครสมาชิกสำเร็จ!',
+        text: 'กำลังพาเข้าสู่ระบบ...',
+        timer: 800,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        width: '350px',
+        padding: '1.5em',
+        backdrop: 'rgba(0,0,0,0.4)',
+      }).then(() => navigate('/courses'));
 
     } catch (error) {
+      console.error('Register error:', error);
       Swal.fire({
         icon: 'error',
         title: 'เกิดข้อผิดพลาด',
-        text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่',
+        text: error?.message || 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่',
         confirmButtonColor: '#d33',
         width: '350px',
       });
     } finally {
       setIsLoading(false);
     }
+  }; // ← ปิด handleRegister ที่นี่
+
+  // ✅ handleFailedAttempt อยู่นอก handleRegister ถูกต้อง
+  const handleFailedAttempt = (type) => {
+    const current = getRegRL();
+    const newAttempts = (current.attempts || 0) + 1;
+    if (newAttempts >= REG_MAX) {
+      setRegRL({ attempts: newAttempts, lockedUntil: Date.now() + REG_LOCK_MS });
+    } else {
+      setRegRL({ attempts: newAttempts, lockedUntil: null });
+    }
+    const safeMessages = {
+      'duplicate': 'เลขบัตรประชาชนนี้มีในระบบแล้ว',
+      'server_error': 'การเชื่อมต่อระบบขัดข้อง กรุณาลองใหม่อีกครั้ง',
+    };
+    const displayMsg = safeMessages[type] || 'ไม่สามารถสมัครสมาชิกได้ กรุณาตรวจสอบข้อมูล';
+    Swal.fire({ icon: 'error', title: 'สมัครไม่สำเร็จ', text: displayMsg, confirmButtonColor: '#d33', width: '350px' });
   };
 
   return (
@@ -257,7 +257,7 @@ const Register = () => {
           <div style={styles.inputGroup}>
             <label style={styles.label}>รหัสผ่าน <span style={styles.note}>*ตัวอังกฤษ+ตัวเลข ขั้นต่ำ 8 ตัว</span></label>
             <input name="password" type="password" placeholder="Password" style={styles.input} value={formData.password} onChange={handleChange} required />
-            {/* [SECURITY] แสดง password strength meter */}
+            
             {formData.password.length > 0 && (
               <div style={{ marginTop: '6px' }}>
                 <div style={{ display: 'flex', gap: '4px', marginBottom: '3px' }}>

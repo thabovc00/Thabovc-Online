@@ -1,7 +1,7 @@
 // src/data/courses/health-safety.js
 
 export const healthSafetyData = {
-  id: "health-safety", // ID สำหรับใช้ทำลิงก์ URL
+  id: "20000-1001health-safety", // ID สำหรับใช้ทำลิงก์ URL
   subjectCode: "20000-1001", 
   teacher: "ครูรัฐกาญจน์", 
   subject: "สุขภาพความปลอดภัยและสิ่งแวดล้อม",

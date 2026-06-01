@@ -3,33 +3,53 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { courses } from "./data/courses/index";
 import Swal from 'sweetalert2';
+import { supabase } from "./supabaseClient"; // 🔥 🔥 นำเข้าตัวเชื่อมต่อ Supabase
 
 export default function CourseDetail() {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const course = courses.find(c => c.id === courseId);
 
-  // ✅ จุดที่ 3: ย้าย isLoggedIn เป็น useState แทนอ่านตรงจาก localStorage
   // eslint-disable-next-line no-unused-vars
   const [isLoggedIn, setIsLoggedIn] = useState(
     localStorage.getItem('isLoggedIn') === 'true'
   );
   const [registeredCourses, setRegisteredCourses] = useState([]);
 
+  // 🔄 ของใหม่: ดึงรายวิชาที่เด็กเคยลงทะเบียนไว้จากตาราง enrollments ใน Supabase เพื่อตรวจสอบสถานะปุ่มและล็อกวิดีโอ
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (isLoggedIn) {
-      const savedReg = localStorage.getItem('registeredCourses');
-      if (savedReg) {
-        setRegisteredCourses(JSON.parse(savedReg));
+    
+    const fetchRegisteredCourses = async () => {
+      const currentUsername = localStorage.getItem("userName") || "";
+      if (isLoggedIn && currentUsername) {
+        try {
+          const { data, error } = await supabase
+            .from("enrollments")
+            .select("course_id")
+            .eq("username", currentUsername);
+
+          if (error) throw error;
+
+          if (data) {
+            const courseIds = data.map((item) => item.course_id);
+            setRegisteredCourses(courseIds);
+            localStorage.setItem('registeredCourses', JSON.stringify(courseIds));
+          }
+        } catch (err) {
+          console.error("Error fetching enrollments from Supabase:", err.message);
+        }
       }
-    }
+    };
+
+    fetchRegisteredCourses();
   }, [isLoggedIn]);
 
   if (!course) return <div style={{ padding: 100, textAlign: 'center', fontSize: 20 }}>ไม่พบรายวิชาที่ท่านต้องการ</div>;
 
   const isRegistered = registeredCourses.includes(course.id);
 
+  // 📝 ของใหม่: ฟังก์ชันลงทะเบียนเรียนในหน้าดีเทลผ่าน Supabase
   const handleRegister = () => {
     if (!isLoggedIn) {
       Swal.fire({
@@ -61,7 +81,6 @@ export default function CourseDetail() {
       try {
         Swal.showLoading();
 
-        // ✅ จุดที่ 1: แก้ key ให้ตรงกับที่ Login.jsx เก็บไว้ ('userName' ตัว N ใหญ่)
         const currentUsername = localStorage.getItem("userName") || "";
 
         if (!currentUsername) {
@@ -74,52 +93,46 @@ export default function CourseDetail() {
           return;
         }
 
-        const payload = {
-          action: "enroll",
-          secretKey: "8642ef1ceffd67950e24180bb1b11a9241f686bfe57288abc3b7b6ef91018e9e",
-          username: currentUsername,
-          courseId: course.id
-        };
+        // 🔥 ยิงบันทึกข้อมูลแนวตั้งลงตาราง enrollments ของ Supabase ตรงๆ
+        const { error } = await supabase
+          .from("enrollments")
+          .insert([
+            { 
+              username: currentUsername, 
+              course_id: course.id 
+            }
+          ]);
 
-        // ✅ จุดที่ 2: อ่าน response เป็น text ก่อน แล้วค่อย parse เพื่อ debug ได้ง่าย
-        const response = await fetch("https://script.google.com/macros/s/AKfycbyk4q1W5Q1JrQohhZRwT_6PTWxQwj0ydgdM3BjadDqXkywxNkQLWApRSAMHntA5xKnQ4Q/exec", {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify(payload)
-        });
-
-        const rawText = await response.text();
-        console.log("📥 server response:", rawText);
-
-        const resData = JSON.parse(rawText);
-
-        if (resData.status === "success") {
-          const updatedReg = [...registeredCourses, course.id];
-          setRegisteredCourses(updatedReg);
-          localStorage.setItem('registeredCourses', JSON.stringify(updatedReg));
-
-          Swal.fire({
-            icon: 'success',
-            title: 'ลงทะเบียนสำเร็จ!',
-            text: 'ยินดีต้อนรับเข้าสู่บทเรียน ข้อมูลบันทึกลงคลาวด์เรียบร้อยแล้วครับ',
-            timer: 2000,
-            showConfirmButton: false
-          });
-        } else if (resData.code === "already_enrolled") {
-          // sync localStorage กรณีที่ข้อมูลหายไป
-          if (!registeredCourses.includes(course.id)) {
-            const updatedReg = [...registeredCourses, course.id];
-            setRegisteredCourses(updatedReg);
-            localStorage.setItem('registeredCourses', JSON.stringify(updatedReg));
+        // 💡 เช็คกรณีถ้าเกิด Error จาก Unique Constraint (ถ้าคุณทำเผื่อไว้ว่าเด็กห้ามลงซ้ำบน Database)
+        if (error) {
+          if (error.code === "23505") { // รหัส Error ทั่วไปของ Postgres กรณีข้อมูลซ้ำ (Unique violation)
+            if (!registeredCourses.includes(course.id)) {
+              const updatedReg = [...registeredCourses, course.id];
+              setRegisteredCourses(updatedReg);
+              localStorage.setItem('registeredCourses', JSON.stringify(updatedReg));
+            }
+            Swal.fire("ลงทะเบียนซ้ำ", "คุณเคยลงทะเบียนรายวิชานี้ในระบบไปแล้วครับ", "info");
+            return;
           }
-          Swal.fire("ลงทะเบียนซ้ำ", "คุณเคยลงทะเบียนรายวิชานี้ในระบบไปแล้วครับ", "info");
-        } else {
-          Swal.fire("ปฏิเสธการเข้าถึง", `เซิร์ฟเวอร์ตอบกลับรหัสข้อผิดพลาด: ${resData.code}`, "error");
+          throw error;
         }
 
+        // อัปเดตสถานะหน้าจอทันทีเมื่อสำเร็จ เพื่อปลดล็อก iframe วิดีโอทันที
+        const updatedReg = [...registeredCourses, course.id];
+        setRegisteredCourses(updatedReg);
+        localStorage.setItem('registeredCourses', JSON.stringify(updatedReg));
+
+        Swal.fire({
+          icon: 'success',
+          title: 'ลงทะเบียนสำเร็จ!',
+          text: 'ยินดีต้อนรับเข้าสู่บทเรียน ข้อมูลบันทึกลงคลาวด์เรียบร้อยแล้วครับ',
+          timer: 2000,
+          showConfirmButton: false
+        });
+
       } catch (error) {
-        console.error("❌ Enrollment error:", error);
-        Swal.fire("การเชื่อมต่อขัดข้อง", "ไม่สามารถจัดเก็บข้อมูลวิชาลง Google Sheet ได้ กรุณาลองใหม่อีกครั้ง", "error");
+        console.error("❌ Supabase Enrollment error:", error);
+        Swal.fire("การเชื่อมต่อขัดข้อง", `ไม่สามารถจัดเก็บข้อมูลได้: ${error.message}`, "error");
       }
     });
   };
