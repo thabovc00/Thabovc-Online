@@ -20,7 +20,7 @@ export const healthSafetyData = {
   ],
   teacherBio: "อาจารย์อดภัยอาชีวอนามัยและสภาพแวดล้อมในการทำงาน มีประสบการณ์ในการวิเคราะห์ความปลอดภัยในโรงงานอุตสาหกรรมและสถานประกอบการ",
   // สามารถเปลี่ยนเป็นรูปครูในโฟลเดอร์ assets ได้ภายหลัง
-  avatar: "/images/Rattakran.png", 
+   avatar: "/images/Rattakarn.png", 
   color: "#10b981", // ใช้สีเขียว (Safety Green) เพื่อความเหมาะสมกับวิชา
   image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=800", // รูปที่เกี่ยวข้องกับความปลอดภัยและโรงงาน
 

@@ -9,6 +9,7 @@ import AnnouncementPage from "./AnnouncementPage";
 import Login from "./components/Login"; 
 import Register from "./components/Register"; 
 import ProfilePage from "./ProfilePage";
+import TeacherProfilePage from "./TeacherProfilePage"; // เพิ่มการนำเข้า TeacherProfilePage
 
 function App() {
   return (
@@ -27,7 +28,7 @@ function App() {
         <Route path="/course/:courseId" element={<CourseDetail />} />
         <Route path="/ContactPage" element={<ContactPage />} />
         <Route path="/AnnouncementPage" element={<AnnouncementPage />} />
-        
+        <Route path="/teacher-profile" element={<TeacherProfilePage />} />
         {/* หน้าข้อมูลส่วนตัว */}
         <Route path="/profile" element={<ProfilePage />} /> 
         

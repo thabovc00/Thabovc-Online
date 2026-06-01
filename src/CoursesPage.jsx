@@ -1,10 +1,9 @@
-// src/CoursesPage.jsx
 import { useState, useEffect } from "react"; 
 import { useNavigate } from "react-router-dom";
 import { courses, categories, levels } from "./data/courses"; 
 import Navbar from "./components/Navbar";
-import Swal from "sweetalert2"; // สำหรับใช้แสดง Alert ตอนกดลงทะเบียนด่วน
-import { supabase } from "./supabaseClient"; // 🔥 นำเข้าตัวเชื่อมต่อ Supabase ของเรา
+import Swal from "sweetalert2"; 
+import { supabase } from "./supabaseClient"; 
 
 export default function CoursesPage() {
   const navigate = useNavigate(); 
@@ -12,53 +11,68 @@ export default function CoursesPage() {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
   const userLevel = localStorage.getItem('userLevel') || ""; 
   const username = localStorage.getItem('userName') || ""; 
+  const userRole = localStorage.getItem('userRole') || "student"; 
 
   const [activeCategory, setActiveCategory] = useState("all");
-  const [activeLevel, setActiveLevel] = useState(isLoggedIn ? userLevel : "all"); 
+  const [activeLevel, setActiveLevel] = useState(isLoggedIn && userRole !== "teacher" ? userLevel : "all"); 
   const [hoveredId, setHoveredId] = useState(null);
   const [search, setSearch] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const [registeredCourses, setRegisteredCourses] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(null); // เก็บ ID วิชาที่กำลังกดลงทะเบียนแบบด่วน
+  const [registeredCourses, setRegisteredCourses] = useState([]); // สำหรับนักเรียน
+  const [teacherCourses, setTeacherCourses] = useState([]); // 🔥 สำหรับเก็บรายวิชาที่ครูคนนี้ลงทะเบียนสอน
+  const [isSubmitting, setIsSubmitting] = useState(null); 
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [activeCategory, activeLevel, search]);
 
-  // 🔄 ของใหม่: ดึงรายวิชาที่เด็กคนนี้เคยลงทะเบียนไว้จากตาราง enrollments ใน Supabase
+  // 🔄 ดึงข้อมูลการลงทะเบียนเรียน หรือ การลงทะเบียนสอนจาก Supabase
   useEffect(() => {
-    const fetchRegisteredCourses = async () => {
-      if (isLoggedIn && username) {
-        try {
+    const fetchUserCourses = async () => {
+      if (!isLoggedIn || !username) return;
+
+      try {
+        if (userRole === "teacher") {
+          // 👨‍🏫 ดึงข้อมูลวิชาที่ครูคนนี้ลงทะเบียนเป็นผู้สอนไว้ (สมมติว่าใช้ตาราง course_teachers)
+          const { data, error } = await supabase
+            .from("course_teachers")
+            .select("course_id")
+            .eq("username", username);
+
+          if (error) throw error;
+          if (data) {
+            const courseIds = data.map((item) => item.course_id);
+            setTeacherCourses(courseIds);
+          }
+        } else {
+          // 🎓 ของนักเรียน: ดึงจากตาราง enrollments ตามปกติ
           const { data, error } = await supabase
             .from("enrollments")
             .select("course_id")
-            .eq("username", username); // เช็คเฉพาะแถวที่เป็นของเด็กคนนี้
+            .eq("username", username);
 
           if (error) throw error;
-
           if (data) {
-            // แปลงรูปแบบจากข้อมูล [{course_id: "health-safety"}] ให้เป็นรูปแบบ Array สั้นๆ ["health-safety"]
             const courseIds = data.map((item) => item.course_id);
             setRegisteredCourses(courseIds);
             localStorage.setItem('registeredCourses', JSON.stringify(courseIds));
           }
-        } catch (err) {
-          console.error("Error fetching enrollments from Supabase:", err.message);
         }
+      } catch (err) {
+        console.error("Error fetching user data from Supabase:", err.message);
       }
     };
 
-    fetchRegisteredCourses();
-  }, [isLoggedIn, username]);
+    fetchUserCourses();
+  }, [isLoggedIn, username, userRole]);
 
-  // 📝 ของใหม่: ฟังก์ชันสำหรับการลงทะเบียนเรียนด่วนลง Supabase
+  // 📝 ฟังก์ชันสำหรับการลงทะเบียนเรียนด่วนของ "นักเรียน"
   const handleQuickRegister = async (e, course) => {
-    e.stopPropagation(); // หยุดการกระจาย Event ไม่ให้ทะลุไปโดนคลิกของการ์ด
+    e.stopPropagation(); 
 
     if (!isLoggedIn) {
       Swal.fire("กรุณาเข้าสู่ระบบ", "โปรดเข้าสู่ระบบก่อนทำการลงทะเบียนเรียนครับ", "warning");
@@ -67,7 +81,7 @@ export default function CoursesPage() {
 
     Swal.fire({
       icon: "question",
-      title: "ยืนยันการลงทะเบียน?",
+      title: "ยืนยันการลงทะเบียนเรียน?",
       html: `คุณต้องการลงทะเบียนเรียนในรายวิชา<br><b>${course.subject}</b> ใช่หรือไม่?`,
       showCancelButton: true,
       confirmButtonColor: "#10b981",
@@ -79,18 +93,16 @@ export default function CoursesPage() {
 
       setIsSubmitting(course.id);
       try {
-        // 🔥 ยิงบันทึกข้อมูลลงตาราง enrollments ของ Supabase โดยตรง (บันทึกแบบแนวตั้ง)
         const { error } = await supabase
           .from("enrollments")
           .insert([{ 
-  username: username,
-  course_id: course.id,
-  student_id: localStorage.getItem('userFirstName') + ' ' + localStorage.getItem('userLastName'),
-}]);
+            username: username,
+            course_id: course.id,
+            student_id: localStorage.getItem('userFirstName') + ' ' + localStorage.getItem('userLastName'),
+          }]);
 
         if (error) throw error;
 
-        // ถ้าบันทึกสำเร็จ -> อัปเดตสถานะที่หน้าจอและใน LocalStorage ทันที
         const updatedReg = [...registeredCourses, course.id];
         setRegisteredCourses(updatedReg);
         localStorage.setItem('registeredCourses', JSON.stringify(updatedReg));
@@ -111,8 +123,55 @@ export default function CoursesPage() {
     });
   };
 
+  // 👨‍🏫 ฟังก์ชันสำหรับการลงทะเบียนเป็น "ผู้สอน" ของคุณครู
+  const handleTeacherRegister = async (e, course) => {
+    e.stopPropagation();
+
+    Swal.fire({
+      icon: "info",
+      title: "ยืนยันการลงทะเบียนสอน?",
+      html: `คุณต้องการลงทะเบียนเป็นผู้สอนในรายวิชา<br><b>${course.subject}</b> ใช่หรือไม่?`,
+      showCancelButton: true,
+      confirmButtonColor: "#3b82f6",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "ยืนยันเป็นผู้สอน",
+      cancelButtonText: "ยกเลิก"
+    }).then(async (result) => {
+      if (!result.isConfirmed) return;
+
+      setIsSubmitting(course.id);
+      try {
+        const { error } = await supabase
+          .from("course_teachers") 
+          .insert([{
+            username: username,
+            course_id: course.id,
+            teacher_name: localStorage.getItem('userFirstName') + ' ' + localStorage.getItem('userLastName')
+          }]);
+
+        if (error) throw error;
+
+        setTeacherCourses([...teacherCourses, course.id]);
+
+        Swal.fire({
+          icon: "success",
+          title: "ลงทะเบียนสอนสำเร็จ!",
+          text: "คุณได้รับสิทธิ์ในการจัดการห้องเรียนวิชานี้แล้ว",
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+      } catch (err) {
+        Swal.fire("เกิดข้อผิดพลาด", `ไม่สามารถลงทะเบียนสอนได้: ${err.message}`, "error");
+      } finally {
+        setIsSubmitting(null);
+      }
+    });
+  };
+
+  // ตรรกะคัดกรองระดับชั้น: ถ้าเป็นครูให้เห็นทุกวิชาเพื่อเลือกสอนได้
   const allowedCourses = courses.filter((c) => {
-    if (!isLoggedIn) return true; 
+    if (!isLoggedIn || userRole === "teacher") return true; 
     const matchLevel = !c.level || 
                        c.level === "all" || 
                        c.level === userLevel || 
@@ -120,10 +179,7 @@ export default function CoursesPage() {
     return matchLevel; 
   });
 
-  const allowedCategoryIds = new Set(allowedCourses.map(c => c.category));
-  allowedCategoryIds.add("all"); 
-  
-  const visibleCategories = categories.filter(cat => allowedCategoryIds.has(cat.id));
+  const visibleCategories = categories;
 
   const filtered = allowedCourses.filter((c) => {
     const matchCat = activeCategory === "all" || c.category === activeCategory;
@@ -220,7 +276,7 @@ export default function CoursesPage() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", gap: "10px", marginBottom: "25px", flexWrap: "wrap" }}>
             {levels
-              .filter(lvl => !isLoggedIn || lvl.id === "all" || lvl.id === userLevel || lvl.label === userLevel)
+              .filter(lvl => !isLoggedIn || userRole === "teacher" || lvl.id === "all" || lvl.id === userLevel || lvl.label === userLevel)
               .map((lvl) => (
               <button
                 key={lvl.id}
@@ -246,7 +302,10 @@ export default function CoursesPage() {
           <div className="lh-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
             {currentItems.map(course => {
               const hovered = hoveredId === course.id;
-              const isRegistered = registeredCourses.includes(course.id);
+              
+              // 🔄 ตรวจสอบสถานะแยกตามประเภทผู้ใช้งาน
+              const isTeacherAssigned = teacherCourses.includes(course.id);
+              const isStudentRegistered = registeredCourses.includes(course.id);
 
               return (
                 <div 
@@ -275,95 +334,86 @@ export default function CoursesPage() {
                   <div style={{ padding: "12px 16px 16px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
                     <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, flex: 1 }}>{course.description}</p>
                     
-                    {/* ── ส่วนจัดการปุ่มควบคุมด้านล่างการ์ด ── */}
+                    {/* ── ส่วนจัดการปุ่มควบคุมตามเงื่อนไขสิทธิ์ครู/นักเรียน ── */}
                     <div style={{ display: "flex", gap: 8, width: "100%" }}>
-                      {isRegistered ? (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleCourseAction(course.id); }} 
-                          style={{ 
-                            width: "100%", padding: "9px", borderRadius: 10, border: "none", 
-                            background: hovered ? course.color : `${course.color}18`, 
-                            color: hovered ? "#fff" : course.color, 
-                            fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" 
-                          }}
-                        >
-                          เข้าสู่ห้องเรียน →
-                        </button>
-                      ) : (
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, width: "100%" }}>
+                      {userRole === "teacher" ? (
+                        // 👨‍🏫 มุมมองของคุณครู
+                        isTeacherAssigned ? (
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleCourseAction(course.id); }} 
-                            onMouseEnter={(e) => {
-                              e.target.style.background = "#f1f5f9";
-                              e.target.style.borderColor = "#94a3b8";
-                              e.target.style.color = "#1e293b";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.background = "#fff";
-                              e.target.style.borderColor = "#cbd5e1";
-                              e.target.style.color = "#64748b";
-                            }}
                             style={{ 
-                              width: "100%",
-                              padding: "8px 4px", 
-                              borderRadius: 10, 
-                              border: "1px solid #cbd5e1", 
-                              background: "#fff", 
-                              color: "#64748b", 
-                              fontSize: "12px", 
-                              fontWeight: 600, 
-                              cursor: "pointer", 
-                              whiteSpace: "nowrap", 
-                              transition: "all 0.2s",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: 2
+                              width: "100%", padding: "9px", borderRadius: 10, border: "none", 
+                              background: hovered ? course.color : `${course.color}18`, 
+                              color: hovered ? "#fff" : course.color, 
+                              fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" 
                             }}
                           >
-                            🔍 รายละเอียด
+                            จัดการห้องเรียน →
                           </button>
-                          
+                        ) : (
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, width: "100%" }}>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleCourseAction(course.id); }} 
+                              style={{ 
+                                width: "100%", padding: "8px 2px", borderRadius: 10, border: "1px solid #cbd5e1", 
+                                background: "#fff", color: "#64748b", fontSize: "11px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
+                                display: "flex", alignItems: "center", justifyContent: "center"
+                              }}
+                            >
+                              🔍 รายละเอียด
+                            </button>
+                            <button 
+                              disabled={isSubmitting === course.id}
+                              onClick={(e) => handleTeacherRegister(e, course)} 
+                              style={{ 
+                                width: "100%", padding: "8px 2px", borderRadius: 10, border: "none", 
+                                background: "#2563eb", color: "#fff", fontSize: "11px", fontWeight: 700, cursor: "pointer",
+                                opacity: isSubmitting === course.id ? 0.6 : 1, transition: "all 0.2s",
+                                display: "flex", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap"
+                              }}
+                            >
+                              {isSubmitting === course.id ? "กำลังบันทึก..." : "👨‍🏫 ลงทะเบียนสอน"}
+                            </button>
+                          </div>
+                        )
+                      ) : (
+                        // 🎓 มุมมองของนักเรียน
+                        isStudentRegistered ? (
                           <button 
-                            disabled={isSubmitting === course.id}
-                            onClick={(e) => handleQuickRegister(e, course)} 
-                            onMouseEnter={(e) => {
-                              if (isSubmitting !== course.id) {
-                                e.target.style.background = "#059669";
-                                e.target.style.transform = "translateY(-1px)";
-                                e.target.style.boxShadow = "0 4px 6px rgba(16,185,129,0.3)";
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (isSubmitting !== course.id) {
-                                e.target.style.background = "#10b981";
-                                e.target.style.transform = "translateY(0)";
-                                e.target.style.boxShadow = "0 2px 4px rgba(16,185,129,0.2)";
-                              }
-                            }}
+                            onClick={(e) => { e.stopPropagation(); handleCourseAction(course.id); }} 
                             style={{ 
-                              width: "100%",
-                              padding: "8px 4px", 
-                              borderRadius: 10, 
-                              border: "none", 
-                              background: "#10b981", 
-                              color: "#fff", 
-                              fontSize: "12px", 
-                              fontWeight: 700, 
-                              cursor: "pointer", 
-                              whiteSpace: "nowrap", 
-                              boxShadow: "0 2px 4px rgba(16,185,129,0.2)", 
-                              opacity: isSubmitting === course.id ? 0.6 : 1, 
-                              transition: "all 0.2s",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: 2
+                              width: "100%", padding: "9px", borderRadius: 10, border: "none", 
+                              background: hovered ? course.color : `${course.color}18`, 
+                              color: hovered ? "#fff" : course.color, 
+                              fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" 
                             }}
                           >
-                            {isSubmitting === course.id ? "กำลังบันทึก..." : "📝 ลงทะเบียน"}
+                            เข้าสู่ห้องเรียน →
                           </button>
-                        </div>
+                        ) : (
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, width: "100%" }}>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleCourseAction(course.id); }} 
+                              style={{ 
+                                width: "100%", padding: "8px 4px", borderRadius: 10, border: "1px solid #cbd5e1", 
+                                background: "#fff", color: "#64748b", fontSize: "12px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
+                              }}
+                            >
+                              🔍 รายละเอียด
+                            </button>
+                            <button 
+                              disabled={isSubmitting === course.id}
+                              onClick={(e) => handleQuickRegister(e, course)} 
+                              style={{ 
+                                width: "100%", padding: "8px 4px", borderRadius: 10, border: "none", 
+                                background: "#10b981", color: "#fff", fontSize: "12px", fontWeight: 700, cursor: "pointer",
+                                opacity: isSubmitting === course.id ? 0.6 : 1, transition: "all 0.2s"
+                              }}
+                            >
+                              {isSubmitting === course.id ? "กำลังบันทึก..." : "📝 ลงทะเบียน"}
+                            </button>
+                          </div>
+                        )
                       )}
                     </div>
 

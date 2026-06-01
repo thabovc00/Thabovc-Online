@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
 const defaultNavItems = [
   { label: "หน้าแรก", path: "/HomePage" },
   { label: "รวมวิชาทั้งหมด", path: "/courses" },
-  { label: "ศูนย์ประกาศ", path: "/AnnouncementPage" },
+
   { label: "ติดต่อ", path: "/ContactPage" },
 ];
 
@@ -30,36 +30,48 @@ export default function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   
-  // 🌟 ประกาศ State ของ userData ที่ก่อนหน้านี้ทำตกหล่นไป
   const [userData, setUserData] = useState({
     name: "",
     major: "",
-    level: ""
+    level: "",
+    role: "student" // 🎭 เพิ่มคีย์ตรวจสถานะสิทธิ์
   });
 
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  const userRole = localStorage.getItem('userRole') || 'student'; // ดึงบทบาทผู้ใช้
 
-  // เงื่อนไขเลือกรายการเมนู: ถ้าล็อกอินแล้ว ค่อยแทรกเมนู "ข้อมูลส่วนตัว"
+  // 🔄 เงื่อนไขเลือกรายการเมนู: แทรกหน้าประวัติสลับตามสิทธิ์นักเรียน หรือ คุณครู
   const navItems = [...defaultNavItems];
   if (isLoggedIn) {
-    navItems.splice(2, 0, { label: "ข้อมูลส่วนตัว", path: "/profile" });
+    if (userRole === 'teacher') {
+      navItems.splice(2, 0, { label: "หน้าจัดการของครู", path: "/teacher-profile" });
+    } else {
+      navItems.splice(2, 0, { label: "ข้อมูลส่วนตัว", path: "/profile" });
+    }
   }
 
   useEffect(() => {
     if (isLoggedIn) {
-      const firstName = localStorage.getItem("userFirstName");  
-      const lastName = localStorage.getItem("userLastName");    
+      const firstName = localStorage.getItem("userFirstName") || "";  
+      const lastName = localStorage.getItem("userLastName") || "";    
       const major = localStorage.getItem("userMajor");
       const level = localStorage.getItem("userLevel");
-      const displayMajor = majorTranslations[major] || major || "ไม่ระบุสาขา";
+      const role = localStorage.getItem("userRole") || "student";
 
-      if (firstName) {
-        setUserData({
-          name: `${firstName} ${lastName}`,  
-          major: displayMajor,
-          level: level || ""
-        });
+      // กรองการจัดเรียงข้อความ
+      let displayMajor = "";
+      if (role === "student") {
+        displayMajor = majorTranslations[major] || major || "ไม่ระบุสาขา";
+      } else {
+        displayMajor = "คุณครูผู้สอน"; // หากเป็นสิทธิ์ครู ให้ขึ้นสถานะแทนชื่อสาขา
       }
+
+      setUserData({
+        name: lastName ? `${firstName} ${lastName}` : firstName,  // ถ้าครูเก็บชื่อเต็มไว้ที่ฟิลด์แรก จะได้ไม่ติดช่องว่างปลายแถว
+        major: displayMajor,
+        level: role === "student" ? (level || "") : "👨‍🏫", // ตัวบ่งชี้ไอคอนของฝั่งครู
+        role: role
+      });
     }
   }, [isLoggedIn]);
 
@@ -88,6 +100,7 @@ export default function Navbar() {
           width: "320px",
         }).then(() => {
           localStorage.clear();
+          sessionStorage.clear();
           navigate("/");
           window.location.reload();
         });
@@ -129,7 +142,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* ฝั่งขวา (Desktop): เช็คว่าถ้า Login แล้วแสดงชื่อ+ปุ่มออก ถ้ายังไม่ล๊อกอินให้แสดงปุ่มเข้าสู่ระบบ */}
+        {/* ฝั่งขวา (Desktop) */}
         <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
           
           {isLoggedIn && userData.name ? (
@@ -138,8 +151,8 @@ export default function Navbar() {
                 <div style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b" }}>
                   {userData.name}
                 </div>
-                <div style={{ fontSize: "11px", color: "#64748b" }}>
-                  {userData.level} {userData.major}
+                <div style={{ fontSize: "11px", color: userData.role === "teacher" ? "#16a34a" : "#64748b", fontWeight: userData.role === "teacher" ? "600" : "normal" }}>
+                  {userData.role === "teacher" ? `${userData.level} ${userData.major}` : `${userData.level} ${userData.major}`}
                 </div>
               </div>
               <button 
@@ -191,7 +204,7 @@ export default function Navbar() {
           {isLoggedIn && userData.name ? (
              <div style={{ padding: "8px 12px", borderBottom: "1px solid #f1f5f9", marginBottom: 5 }}>
                 <div style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b" }}>{userData.name}</div>
-                <div style={{ fontSize: "12px", color: "#64748b" }}>{userData.level} {userData.major}</div>
+                <div style={{ fontSize: "12px", color: userData.role === "teacher" ? "#16a34a" : "#64748b" }}>{userData.level} {userData.major}</div>
              </div>
           ) : (
             <button

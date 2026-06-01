@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { supabase } from '../supabaseClient'; // 👈 แก้ไข Path ถอย 1 ก้าวเพื่อให้อ้างอิงจากโฟลเดอร์ src ได้ถูกต้อง
+import { supabase } from '../supabaseClient'; 
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
@@ -22,9 +22,12 @@ function setRateLimit(data) { sessionStorage.setItem(RL_KEY, JSON.stringify(data
 function resetRateLimit()    { sessionStorage.removeItem(RL_KEY); }
 
 const Login = () => {
-  const [username,      setUsername]      = useState('');
-  const [password,      setPassword]      = useState('');
-  const [isLoading,     setIsLoading]     = useState(false);
+  // 🎭 เพิ่ม State สำหรับแบ่งประเภทผู้ใช้งาน ('student' หรือ 'teacher')
+  const [loginMode, setLoginMode] = useState('student'); 
+  
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [lockRemaining, setLockRemaining] = useState(0);
   const navigate = useNavigate();
 
@@ -44,22 +47,37 @@ const Login = () => {
     return () => clearInterval(id);
   }, []);
 
+  // 📝 ล้างค่าเวลาสลับแท็บนักเรียน/ครู
+  const handleModeChange = (mode) => {
+    setLoginMode(mode);
+    setUsername('');
+    setPassword('');
+  };
+
   const handleUsernameChange = (e) => {
     const val = e.target.value;
-    if (/^\d*$/.test(val) && val.length <= 13) setUsername(val);
+    if (loginMode === 'student') {
+      // ถ้านักเรียน: บังคับเป็นตัวเลข ไม่เกิน 13 หลัก
+      if (/^\d*$/.test(val) && val.length <= 13) setUsername(val);
+    } else {
+      // ถ้าเป็นครู: พิมพ์ตัวอักษรหรือข้อความทั่วไปตามที่คุณแอดไว้ในระบบได้เลย
+      setUsername(val);
+    }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     const rl = getRateLimit();
+    // eslint-disable-next-line react-hooks/purity
     if (rl.lockedUntil && Date.now() < rl.lockedUntil) {
       const mins = Math.ceil((rl.lockedUntil - Date.now()) / 60000);
       Swal.fire({ icon: 'error', title: 'บัญชีถูกล็อกชั่วคราว', text: `กรุณารอ ${mins} นาทีแล้วลองใหม่`, confirmButtonColor: '#ef4444', width: '350px' });
       return;
     }
 
-    if (username.length !== 13) {
+    // ตรวจสอบความยาวเลขบัตรเฉพาะฝั่งนักเรียน
+    if (loginMode === 'student' && username.length !== 13) {
       Swal.fire({ icon: 'warning', title: 'เลขบัตรประชาชนไม่ถูกต้อง', text: 'กรุณากรอกเลขบัตรประชาชนให้ครบ 13 หลัก', confirmButtonColor: '#4A90E2', width: '350px' });
       return;
     }
@@ -76,85 +94,127 @@ const Login = () => {
     });
 
     try {
-      // 🕵️‍♂️ 1. ตรวจสอบการเข้าสู่ระบบผ่านตาราง users
-      // ✅ แก้แล้ว
-const { data: userData, error: userError } = await supabase
-  .from('students')                                              // ← แก้
-  .select('username, first_name, last_name, phone, category, level, password') // ← แก้
-  .eq('username', username)
-  .eq('password', password)
-  .maybeSingle();
+      if (loginMode === 'student') {
+        // ==========================================
+        // 🧑‍🎓 ฝั่งนักเรียน: ค้นหาข้อมูลในตาราง students
+        // ==========================================
+        const { data: userData, error: userError } = await supabase
+          .from('students')                                             
+          .select('username, first_name, last_name, phone, category, level, password') 
+          .eq('username', username)
+          .eq('password', password)
+          .maybeSingle();
 
-if (userError) throw userError;
+        if (userError) throw userError;
 
-if (userData) {
-  resetRateLimit();
+        if (userData) {
+          resetRateLimit();
 
-  localStorage.setItem('userName',      userData.username   || '');
-  localStorage.setItem('userFirstName', userData.first_name || ''); // ← แก้
-  localStorage.setItem('userLastName',  userData.last_name  || ''); // ← แก้
-  localStorage.setItem('userPhone',     userData.phone      || '');
-  localStorage.setItem('userMajor',     userData.category   || '');
-  localStorage.setItem('userLevel',     userData.level      || '');
-  localStorage.setItem('isLoggedIn',    'true');
-  sessionStorage.setItem('isLoggedIn',  'true');
+          localStorage.setItem('userName',      userData.username   || '');
+          localStorage.setItem('userFirstName', userData.first_name || ''); 
+          localStorage.setItem('userLastName',  userData.last_name  || ''); 
+          localStorage.setItem('userPhone',     userData.phone      || '');
+          localStorage.setItem('userMajor',     userData.category   || '');
+          localStorage.setItem('userLevel',     userData.level      || '');
+          localStorage.setItem('userRole',      'student'); // 🔥 ระบุสถานะนักเรียน
+          localStorage.setItem('isLoggedIn',    'true');
+          sessionStorage.setItem('isLoggedIn',  'true');
 
-  // ✅ ดึง enrollments แบบแนวตั้ง (course_id) ให้ตรงกับ structure จริง
-  const fetchEnrollmentsPromise = supabase
-    .from('enrollments')
-    .select('course_id')
-    .eq('username', userData.username)
-    .then(({ data: enrollData, error: enrollError }) => {
-      if (!enrollError && enrollData) {
-        const courseIds = enrollData.map(item => item.course_id);
-        localStorage.setItem('registeredCourses', JSON.stringify(courseIds));
-      } else {
-        localStorage.setItem('registeredCourses', JSON.stringify([]));
-      }
-    })
-    .catch(err => {
-      console.warn('getEnrollments failed:', err);
-      localStorage.setItem('registeredCourses', JSON.stringify([]));
-    });
+          const fetchEnrollmentsPromise = supabase
+            .from('enrollments')
+            .select('course_id')
+            .eq('username', userData.username)
+            .then(({ data: enrollData, error: enrollError }) => {
+              if (!enrollError && enrollData) {
+                const courseIds = enrollData.map(item => item.course_id);
+                localStorage.setItem('registeredCourses', JSON.stringify(courseIds));
+              } else {
+                localStorage.setItem('registeredCourses', JSON.stringify([]));
+              }
+            })
+            .catch(err => {
+              console.warn('getEnrollments failed:', err);
+              localStorage.setItem('registeredCourses', JSON.stringify([]));
+            });
 
-        // 4. 🎉 แสดงผลสำเร็จรวดเร็ว (450ms) บินเข้าสู่ระบบทันที
-        Swal.fire({
-          icon: 'success',
-          title: 'เข้าสู่ระบบสำเร็จ!',
-          html: `ยินดีต้อนรับ <b>${userData.first_name}</b>`,
-          showConfirmButton: false,
-          timer: 450, 
-          timerProgressBar: true,
-          backdrop: 'rgba(0,0,0,0.4)',
-        }).then(async () => {
-          // ตัวป้องกันการค้างกรณีเครือข่ายดีเลย์
-          await Promise.race([
-            fetchEnrollmentsPromise,
-            new Promise(resolve => setTimeout(resolve, 400))
-          ]);
-          
-          navigate('/courses', { replace: true });
-        });
+          Swal.fire({
+            icon: 'success',
+            title: 'เข้าสู่ระบบสำเร็จ!',
+            html: `ยินดีต้อนรับคุณนักเรียน <b>${userData.first_name}</b>`,
+            showConfirmButton: false,
+            timer: 450, 
+            timerProgressBar: true,
+            backdrop: 'rgba(0,0,0,0.4)',
+          }).then(async () => {
+            await Promise.race([
+              fetchEnrollmentsPromise,
+              new Promise(resolve => setTimeout(resolve, 400))
+            ]);
+            navigate('/courses', { replace: true });
+          });
 
-      } else {
-        const current     = getRateLimit();
-        const newAttempts = (current.attempts || 0) + 1;
-        const remaining   = MAX_ATTEMPTS - newAttempts;
-
-        if (newAttempts >= MAX_ATTEMPTS) {
-          const lockedUntil = Date.now() + LOCKOUT_MS;
-          setRateLimit({ attempts: newAttempts, lockedUntil });
-          Swal.fire({ icon: 'error', title: 'บัญชีถูกล็อกชั่วคราว', text: `พยายามผิดพลาดเกิน ${MAX_ATTEMPTS} ครั้ง กรุณารอ ${LOCKOUT_MINUTES} นาที`, confirmButtonColor: '#ef4444', backdrop: 'rgba(0,0,0,0.4)' });
         } else {
-          setRateLimit({ attempts: newAttempts, lockedUntil: null });
-          Swal.fire({ icon: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', html: `เลขบัตรประชาชนหรือรหัสผ่านไม่ถูกต้อง<br><small style="color:#94a3b8">เหลืออีก ${remaining} ครั้งก่อนบัญชีจะถูกล็อก</small>`, confirmButtonColor: '#ef4444', confirmButtonText: 'ลองใหม่อีกครั้ง', backdrop: 'rgba(0,0,0,0.4)' });
+          handleLoginFailed();
+        }
+
+      } else {
+        const { data: teacherData, error: teacherError } = await supabase
+          .from('teachers')
+          .select('username, password, name, managed_course_id')
+          .eq('username', username)
+          .eq('password', password)
+          .maybeSingle();
+
+        if (teacherError) throw teacherError;
+
+        if (teacherData) {
+          resetRateLimit();
+
+          localStorage.setItem('userName', teacherData.username || '');
+          localStorage.setItem('userFirstName', teacherData.name || ''); // เก็บชื่อเต็มครูไว้ที่นี่
+          localStorage.setItem('userLastName', ''); // เคลียร์ของเก่าป้องกันบั๊กต่อชื่อซ้ำ
+          localStorage.setItem('userRole', 'teacher'); 
+          localStorage.setItem('managedCourseId', teacherData.managed_course_id || ''); 
+          localStorage.setItem('isLoggedIn', 'true');
+          sessionStorage.setItem('isLoggedIn', 'true');
+
+          Swal.fire({
+            icon: 'success',
+            title: 'เข้าสู่ระบบผู้ดูแลสำเร็จ!',
+            html: `สวัสดีครับคุณครู <b>${teacherData.name}</b>`,
+            showConfirmButton: false,
+            timer: 600,
+            timerProgressBar: true,
+            backdrop: 'rgba(0,0,0,0.4)',
+          }).then(() => {
+            // 🔥 ปรับแก้: ล็อกอินครูเสร็จ ให้วิ่งตรงไปที่หน้าโปรไฟล์ครูเพื่อจัดการวิชาของตัวเองทันที
+            navigate('/teacher-profile', { replace: true });
+          });
+
+        } else {
+          handleLoginFailed();
         }
       }
     } catch (error) {
       console.error("⚡ Connection Error:", error.message);
-      Swal.fire({ icon: 'warning', title: 'การเชื่อมต่อมีปัญหา', text: `ไม่สามารถติดต่อฐานข้อมูลได้ (${error.message})`, confirmButtonColor: '#f59e0b', confirmButtonText: 'รับทราบ', backdrop: 'rgba(0,0,0,0.4)' });
+      Swal.fire({ icon: 'warning', title: 'การเชื่อมต่อมีปัญหา', text: `ไม่สามารถติดต่อฐานข้อมูลได้ (${error.message})`, confirmButtonColor: '#f59e0b', backdrop: 'rgba(0,0,0,0.4)' });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLoginFailed = () => {
+    const current = getRateLimit();
+    const newAttempts = (current.attempts || 0) + 1;
+    const remaining = MAX_ATTEMPTS - newAttempts;
+
+    if (newAttempts >= MAX_ATTEMPTS) {
+      const lockedUntil = Date.now() + LOCKOUT_MS;
+      setRateLimit({ attempts: newAttempts, lockedUntil });
+      Swal.fire({ icon: 'error', title: 'บัญชีถูกล็อกชั่วคราว', text: `พยายามผิดพลาดเกิน ${MAX_ATTEMPTS} ครั้ง กรุณารอ ${LOCKOUT_MINUTES} นาที`, confirmButtonColor: '#ef4444', backdrop: 'rgba(0,0,0,0.4)' });
+    } else {
+      setRateLimit({ attempts: newAttempts, lockedUntil: null });
+      Swal.fire({ icon: 'error', title: 'เข้าสู่ระบบไม่สำเร็จ', html: `ข้อมูลชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง<br><small style="color:#94a3b8">เหลืออีก ${remaining} ครั้งก่อนบัญชีจะถูกล็อก</small>`, confirmButtonColor: '#ef4444', confirmButtonText: 'ลองใหม่อีกครั้ง', backdrop: 'rgba(0,0,0,0.4)' });
     }
   };
 
@@ -175,6 +235,23 @@ if (userData) {
           <p style={styles.subtitle}>ระบบจัดการเรียนรู้ออนไลน์</p>
         </div>
 
+        <div style={styles.tabContainer}>
+          <button 
+            type="button" 
+            onClick={() => handleModeChange('student')} 
+            style={{...styles.tabButton, ...(loginMode === 'student' ? styles.activeTab : {})}}
+          >
+            👨‍🎓 นักเรียน/นักศึกษา
+          </button>
+          <button 
+            type="button" 
+            onClick={() => handleModeChange('teacher')} 
+            style={{...styles.tabButton, ...(loginMode === 'teacher' ? styles.activeTab : {})}}
+          >
+            👨‍🏫 คุณครูผู้สอน
+          </button>
+        </div>
+
         {isLocked && (
           <div style={styles.lockBanner}>
             <span style={{ fontSize: '16px' }}>🔒</span>
@@ -184,14 +261,27 @@ if (userData) {
 
         <form onSubmit={handleLogin} style={styles.form}>
           <div style={styles.inputGroup}>
-            <label style={styles.label}>เลขบัตรประชาชน</label>
+            <label style={styles.label}>
+              {loginMode === 'student' ? 'เลขบัตรประชาชน' : 'รหัสชื่อผู้ใช้ของคุณครู (Username)'}
+            </label>
             <div style={styles.inputWrapper}>
-              <span style={styles.inputIcon}>🪪</span>
-              <input type="text" inputMode="numeric" placeholder="กรอกเลข 13 หลัก" style={styles.input} value={username} onChange={handleUsernameChange} disabled={isLocked} required />
+              <span style={styles.inputIcon}>{loginMode === 'student' ? '🪪' : '👤'}</span>
+              <input 
+                type="text"
+                inputMode={loginMode === 'student' ? 'numeric' : 'text'} 
+                placeholder={loginMode === 'student' ? 'กรอกเลข 13 หลัก' : 'กรอกชื่อผู้ใช้ครู'} 
+                style={styles.input} 
+                value={username} 
+                onChange={handleUsernameChange} 
+                disabled={isLocked} 
+                required 
+              />
             </div>
-            <div style={{ fontSize: '11px', marginTop: '5px', color: username.length === 13 ? '#16a34a' : '#94a3b8' }}>
-              {username.length}/13 หลัก {username.length === 13 ? '✓ ครบแล้ว' : ''}
-            </div>
+            {loginMode === 'student' && (
+              <div style={{ fontSize: '11px', marginTop: '5px', color: username.length === 13 ? '#16a34a' : '#94a3b8' }}>
+                {username.length}/13 หลัก {username.length === 13 ? '✓ ครบแล้ว' : ''}
+              </div>
+            )}
           </div>
 
           <div style={styles.inputGroup}>
@@ -203,19 +293,22 @@ if (userData) {
           </div>
 
           <button type="submit" style={{ ...styles.loginBtn, opacity: (isLoading || isLocked) ? 0.5 : 1, cursor: (isLoading || isLocked) ? 'not-allowed' : 'pointer' }} disabled={isLoading || isLocked}>
-            {isLoading ? 'กำลังเข้าสู่ระบบ...' : isLocked ? 'บัญชีถูกล็อกชั่วคราว' : 'เข้าสู่ระบบ'}
+            {isLoading ? 'กำลังเข้าสู่ระบบ...' : isLocked ? 'บัญชีถูกล็อกชั่วคราว' : `เข้าสู่ระบบแผนก${loginMode === 'student' ? 'นักเรียน' : 'คุณครู'}`}
           </button>
 
-          <div style={styles.divider}><span>หรือ</span></div>
-
-          <button type="button" onClick={() => navigate('/register')} style={styles.regBtn} disabled={isLoading}>
-            สมัครสมาชิกใหม่
-          </button>
+          {loginMode === 'student' && (
+            <>
+              <div style={styles.divider}><span>หรือ</span></div>
+              <button type="button" onClick={() => navigate('/register')} style={styles.regBtn} disabled={isLoading}>
+                สมัครสมาชิกใหม่
+              </button>
+            </>
+          )}
         </form>
 
         <div style={styles.noteBox}>
-          <p style={styles.noteTitle}>🔑 ลืมรหัสผ่าน?</p>
-          <p style={styles.noteText}>ติดต่อครูผู้จัดการระบบได้เลยครับ</p>
+          <p style={styles.noteTitle}>🔑 ลืมรหัสผ่านหรือพบปัญหาใช้งาน?</p>
+          <p style={styles.noteText}>ติดต่อครูแอดมินผู้จัดการระบบได้โดยตรงครับ</p>
           <button type="button" onClick={() => window.open(lineUrl, '_blank')} style={styles.lineBtn}>
             <span style={{ fontSize: '16px' }}>💬</span> ติดต่อผ่าน LINE
           </button>
@@ -229,15 +322,22 @@ if (userData) {
   );
 };
 
+// 🎨 เพิ่มชุดตกแต่งแผงปุ่มสลับประเภทผู้ใช้งานด้านล่างนี้
 const styles = {
   container: { display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '20px', background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #7c3aed 100%)', fontFamily: "'Kanit', sans-serif" },
   card:      { background: '#fff', borderRadius: '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', width: '100%', maxWidth: '420px', overflow: 'hidden' },
-  header:    { background: 'linear-gradient(135deg, #1e3a8a, #2563eb)', padding: '32px 40px 28px', textAlign: 'center' },
+  header:    { background: 'linear-gradient(135deg, #1e3a8a, #2563eb)', padding: '32px 40px 24px', textAlign: 'center' },
   logoBox:   { width: 52, height: 52, borderRadius: 14, margin: '0 auto 12px', background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700, color: '#fff' },
   title:     { margin: 0, fontSize: '22px', fontWeight: 700, color: '#fff' },
   subtitle:  { margin: '4px 0 0', fontSize: '13px', opacity: 0.8, color: '#bfdbfe' },
+  
+  // สไตล์สำหรับแถบปุ่มสลับ นักเรียน / ครู
+  tabContainer: { display: 'flex', background: '#f1f5f9', padding: '6px', margin: '20px 32px 0 32px', borderRadius: '12px' },
+  tabButton: { flex: 1, padding: '10px', border: 'none', background: 'transparent', borderRadius: '8px', fontSize: '13px', fontWeight: '600', color: '#64748b', cursor: 'pointer', transition: 'all 0.2s', fontFamily: "'Kanit', sans-serif" },
+  activeTab: { background: '#fff', color: '#2563eb', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
+
   lockBanner:{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fef2f2', borderBottom: '1px solid #fecaca', padding: '10px 20px', fontSize: '13px', color: '#991b1b' },
-  form:      { display: 'flex', flexDirection: 'column', padding: '28px 32px 20px' },
+  form:      { display: 'flex', flexDirection: 'column', padding: '20px 32px 20px' },
   inputGroup:{ marginBottom: '18px' },
   label:     { display: 'block', marginBottom: '7px', fontSize: '13px', fontWeight: '600', color: '#374151' },
   inputWrapper: { display: 'flex', alignItems: 'center', border: '1.5px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden', background: '#f8fafc' },
