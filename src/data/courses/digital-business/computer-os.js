@@ -9,7 +9,7 @@ export const computerOSData = {
   category: "digital-business", // หมวดเทคโนโลยีธุรกิจดิจิทัล
   level: "ปวช.1", // ระดับชั้น ปวช.1
   targetMajors: ["เทคโนโลยีธุรกิจดิจิทัล", "สาขาเทคโนโลยีธุรกิจดิจิทัล"],
-  videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", 
+  videoUrl: "https://www.youtube.com/embed/dgV_Th6ONiI", 
   
   contentTitle: "ทำความเข้าใจระบบปฏิบัติการ หัวใจสำคัญของคอมพิวเตอร์",
   content: "วิชานี้ผู้เรียนจะได้ศึกษาและปฏิบัติเกี่ยวกับการทำงานของระบบปฏิบัติการคอมพิวเตอร์ (Operating System) ทั้งตระกูล Windows, macOS และ Open Source (เช่น Linux) รวมถึงการติดตั้ง การจัดการไฟล์และโฟลเดอร์ ระบบรักษาความปลอดภัยเบื้องต้น และการดูแลบำรุงรักษาระบบ เพื่อเป็นพื้นฐานสำคัญในการต่อยอดในสายงานเทคโนโลยีดิจิทัลครับ",

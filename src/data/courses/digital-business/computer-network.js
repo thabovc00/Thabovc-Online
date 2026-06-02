@@ -1,0 +1,37 @@
+export const computerNetworkData = {
+  id: "computer-network",
+  subjectCode: "21910-2013",
+  teacher: "ครูเตชสิทธิ์ สิงโตงาม (ครูแบงค์)",
+  subject: "ระบบเครือข่ายคอมพิวเตอร์",
+  category: "digital-business",
+  level: "ปวช.2",
+  targetMajors: ["เทคโนโลยีธุรกิจดิจิทัล"],
+
+  videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+  contentTitle: "พื้นฐานระบบเครือข่ายและการสื่อสารข้อมูล",
+  content: "ในรายวิชานี้ นักเรียนจะได้เรียนรู้เกี่ยวกับโครงสร้างพื้นฐานของระบบเครือข่ายคอมพิวเตอร์ หลักการสื่อสารข้อมูล อุปกรณ์เครือข่ายต่างๆ รวมถึงการตั้งค่าและการดูแลรักษาเครือข่ายเบื้องต้นเพื่อให้สามารถใช้งานได้อย่างปลอดภัยและมีประสิทธิภาพ",
+  description: "เน้นการสร้างความเข้าใจในเรื่อง Topology, Protocols, อุปกรณ์เครือข่าย และทักษะการแก้ปัญหาเครือข่ายในงานธุรกิจ",
+  benefits: [
+    "เข้าใจโครงสร้างและการทำงานของระบบเครือข่ายคอมพิวเตอร์",
+    "สามารถติดตั้งและตั้งค่าอุปกรณ์เครือข่ายพื้นฐานได้",
+    "มีความรู้เรื่องความปลอดภัยในระบบเครือข่ายดิจิทัลเบื้องต้น"
+  ],
+  teacherBio: "ครูผู้เชี่ยวชาญด้านระบบเครือข่ายและโครงสร้างพื้นฐานไอที มุ่งเน้นให้นักเรียนเข้าใจระบบเครือข่ายที่นำไปใช้ได้จริงในการทำงาน",
+  color: "#0ea5e9",
+  avatar: "/images/Techasit.png",
+  image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800",
+
+  lessons: [
+    { title: "แนะนำรายวิชาระบบเครือข่ายคอมพิวเตอร์", duration: "05:00", link: "https://youtu.be/..." },
+    { title: "บทที่ 1: ความรู้เบื้องต้นเกี่ยวกับเครือข่ายคอมพิวเตอร์", duration: "12:00", link: "https://youtu.be/..." },
+    { title: "บทที่ 2: รูปแบบการเชื่อมต่อเครือข่าย (Network Topology)", duration: "15:30", link: "https://youtu.be/..." },
+    { title: "บทที่ 3: อุปกรณ์เครือข่ายและการทำงาน", duration: "18:45", link: "https://youtu.be/..." },
+    { title: "บทที่ 4: มาตรฐานการสื่อสารและโปรโตคอล (OSI Model)", duration: "20:00", link: "https://youtu.be/..." },
+    { title: "บทที่ 5: ระบบ IP Addressing และการกำหนดค่า", duration: "22:15", link: "https://youtu.be/..." },
+    { title: "บทที่ 6: การติดตั้งและตั้งค่า Router/Switch เบื้องต้น", duration: "25:30", link: "https://youtu.be/..." },
+    { title: "บทที่ 7: ระบบเครือข่ายไร้สาย (Wireless Network)", duration: "19:00", link: "https://youtu.be/..." },
+    { title: "บทที่ 8: การจัดการความปลอดภัยในเครือข่าย", duration: "14:20", link: "https://youtu.be/..." },
+    { title: "บทที่ 9: การตรวจสอบและแก้ไขปัญหาเครือข่าย (Troubleshooting)", duration: "16:10", link: "https://youtu.be/..." },
+    { title: "บทสรุปและการประยุกต์ใช้ในธุรกิจดิจิทัล", duration: "10:00", link: "https://youtu.be/..." },
+  ]
+};

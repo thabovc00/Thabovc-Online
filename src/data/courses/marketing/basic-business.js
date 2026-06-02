@@ -3,11 +3,11 @@
 export const basicBusinessData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อป้องกันการซ้ำซ้อน
   id: "20000-1003-basic-business", 
-  subjectCode: "20000-1003", 
+  subjectCode: "20001-1003", 
   teacher: "ครูอุวรา", 
   subject: "ธุรกิจเบื้องต้น",
   category: "marketing", // หมวดวิชาสามัญ
-  level: "ปวช.1", // ระดับชั้น ปวช.1
+  level: ["ปวช.1", "ปวช.2"],
   videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", 
   targetMajors: ["การตลาด", "สาขาการตลาด"], // ใส่ดักสำหรับสาขาที่เกี่ยวข้อง
   contentTitle: "พื้นฐานความรู้ด้านธุรกิจและการเป็นผู้ประกอบการ",
