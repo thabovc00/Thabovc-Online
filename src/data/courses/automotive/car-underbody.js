@@ -1,5 +1,5 @@
 export const carUnderbodyData = {
-  id: "car-underbody",
+  id: "20101-2003-งานเครื่องล่างรถยนต์",
   subjectCode: "20101-2003",
   teacher: "นายขจรเกียรติ ผิวเพชร (ครูเบนซ์)",
   subject: "งานเครื่องล่างรถยนต์",

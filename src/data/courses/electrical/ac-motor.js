@@ -1,5 +1,5 @@
 export const acMotorData = {
-  id: "ac-motor",
+  id: "20104-2008-มอเตอร์ไฟฟ้ากระแสสลับ",
   subjectCode: "20104-2008",
   teacher: "ครูกำพล เพ็งอังคาร (ครูต่อ)",
   subject: "มอเตอร์ไฟฟ้ากระแสสลับ",

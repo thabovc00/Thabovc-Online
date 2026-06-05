@@ -1,7 +1,7 @@
 export const medicalEquipmentData = {
-  id: "medical-equipment",
+  id: "21302-2004-เครื่องมือและอุปกรณ์ในสถานพยาบาล",
   subjectCode: "21302-2004",
-  teacher: "นางสาวกมลวรรณ สุวรรณเหลา (ครูมิ้น)",
+  teacher: "ครูกมลวรรณ สุวรรณเหลา (ครูมิ้น)",
   subject: "เครื่องมือและอุปกรณ์ในสถานพยาบาล",
   category: "hospital-business",
   level: "ปวช.2",

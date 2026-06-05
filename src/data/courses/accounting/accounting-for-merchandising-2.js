@@ -2,7 +2,7 @@
 
 export const merchandisingAccounting2Data = {
   // ใช้ ID ที่พ่วงรหัสวิชา เพื่อแยกจากเล่ม 1
-  id: "20201-2001-merchandising-accounting-2", 
+  id: "20201-2001-การบัญชีธุรกิจซื้อขายสินค้า 2", 
   subjectCode: "20201-2001", 
   teacher: "ครูไพลิน", 
   subject: "การบัญชีธุรกิจซื้อขายสินค้า 2",

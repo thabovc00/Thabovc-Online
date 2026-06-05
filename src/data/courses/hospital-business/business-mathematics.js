@@ -2,7 +2,7 @@
 
 export const businessMathematicsData = {
   // ใช้ ID ที่พ่วงรหัสวิชา 20000-1404
-  id: "20000-1404-business-math", 
+  id: "20000-1404-คณิตศาสตร์ธุรกิจและบริการ", 
   subjectCode: "20000-1404", 
   teacher: "ครูรัฐกาญจน์", 
   subject: "คณิตศาสตร์ธุรกิจและบริการ",

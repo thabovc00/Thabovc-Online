@@ -2,7 +2,7 @@
 
 export const basicTechnicalDrawingData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อป้องกันการซ้ำซ้อน
-  id: "20100-1001-technical-drawing", 
+  id: "20100-1001-เขียนแบบเทคนิคเบื้องต้น", 
   subjectCode: "20100-1001", 
   teacher: "ครูชิตวร", 
   subject: "เขียนแบบเทคนิคเบื้องต้น",

@@ -2,7 +2,7 @@
 
 export const dcCircuitsData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อความชัดเจน
-  id: "20104-2002-dc-circuits", 
+  id: "20104-2002-วงจรไฟฟ้ากระแสตรง", 
   subjectCode: "20104-2002", 
   teacher: "ครูกำพล", 
   subject: "วงจรไฟฟ้ากระแสตรง",

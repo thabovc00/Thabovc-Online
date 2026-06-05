@@ -2,7 +2,7 @@
 
 export const healthcareServiceSafetyData = {
   // ใช้ ID ที่พ่วงรหัสวิชา เพื่อแยกจากวิชาความปลอดภัยตัวอื่น (20001-1001)
-  id: "21302-2003-healthcare-service-safety", 
+  id: "21302-2003-ความปลอดภัยในงานบริการสุขภาพ", 
   subjectCode: "21302-2003", 
   teacher: "ครูรัฐกาญจน์", 
   subject: "ความปลอดภัยในงานบริการสุขภาพ",

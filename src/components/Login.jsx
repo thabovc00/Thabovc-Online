@@ -22,7 +22,7 @@ function setRateLimit(data) { sessionStorage.setItem(RL_KEY, JSON.stringify(data
 function resetRateLimit()    { sessionStorage.removeItem(RL_KEY); }
 
 const Login = () => {
-  // 🎭 เพิ่ม State สำหรับแบ่งประเภทผู้ใช้งาน ('student' หรือ 'teacher')
+  // 🎭 แบ่งประเภทผู้ใช้งานระหว่าง 'student' หรือ 'teacher'
   const [loginMode, setLoginMode] = useState('student'); 
   
   const [username, setUsername] = useState('');
@@ -47,7 +47,7 @@ const Login = () => {
     return () => clearInterval(id);
   }, []);
 
-  // 📝 ล้างค่าเวลาสลับแท็บนักเรียน/ครู
+  // 📝 ล้างค่าสิทธิ์และข้อมูลเก่าทันทีที่ผู้ใช้สลับแท็บ
   const handleModeChange = (mode) => {
     setLoginMode(mode);
     setUsername('');
@@ -57,10 +57,10 @@ const Login = () => {
   const handleUsernameChange = (e) => {
     const val = e.target.value;
     if (loginMode === 'student') {
-      // ถ้านักเรียน: บังคับเป็นตัวเลข ไม่เกิน 13 หลัก
+      // ถ้านักเรียน: บังคับเป็นตัวเลขเลขบัตร ไม่เกิน 13 หลัก
       if (/^\d*$/.test(val) && val.length <= 13) setUsername(val);
     } else {
-      // ถ้าเป็นครู: พิมพ์ตัวอักษรหรือข้อความทั่วไปตามที่คุณแอดไว้ในระบบได้เลย
+      // ถ้าเป็นครู: พิมพ์ตัวอักษรภาษาอังกฤษ ตัวเลข หรือรหัสทั่วไปได้ตามใจชอบ
       setUsername(val);
     }
   };
@@ -69,7 +69,6 @@ const Login = () => {
     e.preventDefault();
 
     const rl = getRateLimit();
-    // eslint-disable-next-line react-hooks/purity
     if (rl.lockedUntil && Date.now() < rl.lockedUntil) {
       const mins = Math.ceil((rl.lockedUntil - Date.now()) / 60000);
       Swal.fire({ icon: 'error', title: 'บัญชีถูกล็อกชั่วคราว', text: `กรุณารอ ${mins} นาทีแล้วลองใหม่`, confirmButtonColor: '#ef4444', width: '350px' });
@@ -94,14 +93,16 @@ const Login = () => {
     });
 
     try {
+      const cleanUsername = username.trim();
+
       if (loginMode === 'student') {
         // ==========================================
-        // 🧑‍🎓 ฝั่งนักเรียน: ค้นหาข้อมูลในตาราง students
+        // 🧑‍🎓 ฝั่งนักเรียน: ดึงข้อมูลจากตาราง students
         // ==========================================
         const { data: userData, error: userError } = await supabase
           .from('students')                                             
           .select('username, first_name, last_name, phone, category, level, password') 
-          .eq('username', username)
+          .eq('username', cleanUsername)
           .eq('password', password)
           .maybeSingle();
 
@@ -116,7 +117,8 @@ const Login = () => {
           localStorage.setItem('userPhone',     userData.phone      || '');
           localStorage.setItem('userMajor',     userData.category   || '');
           localStorage.setItem('userLevel',     userData.level      || '');
-          localStorage.setItem('userRole',      'student'); // 🔥 ระบุสถานะนักเรียน
+          localStorage.setItem('role',          'student'); 
+          localStorage.setItem('userRole',      'student'); 
           localStorage.setItem('isLoggedIn',    'true');
           sessionStorage.setItem('isLoggedIn',  'true');
 
@@ -158,10 +160,17 @@ const Login = () => {
         }
 
       } else {
+        // ==========================================
+        // 👨‍🏫 ฝั่งคุณครู: ดึงข้อมูลจากตาราง teachers
+        // ==========================================
+        // ทำการแปลง Username เป็นตัวพิมพ์เล็กเพื่อให้มีความแม่นยำสูงแบบ Case-insensitive
+        const teacherUsernameClean = cleanUsername.toLowerCase();
+
+        // ดึงข้อมูลฟิลด์ที่รองรับทั้งโครงสร้างฐานข้อมูลแบบเก่าและแบบใหม่ป้องกันการพัง
         const { data: teacherData, error: teacherError } = await supabase
           .from('teachers')
-          .select('username, password, name, managed_course_id')
-          .eq('username', username)
+          .select('*') 
+          .eq('username', teacherUsernameClean)
           .eq('password', password)
           .maybeSingle();
 
@@ -170,24 +179,34 @@ const Login = () => {
         if (teacherData) {
           resetRateLimit();
 
-          localStorage.setItem('userName', teacherData.username || '');
-          localStorage.setItem('userFirstName', teacherData.name || ''); // เก็บชื่อเต็มครูไว้ที่นี่
-          localStorage.setItem('userLastName', ''); // เคลียร์ของเก่าป้องกันบั๊กต่อชื่อซ้ำ
-          localStorage.setItem('userRole', 'teacher'); 
-          localStorage.setItem('managedCourseId', teacherData.managed_course_id || ''); 
-          localStorage.setItem('isLoggedIn', 'true');
-          sessionStorage.setItem('isLoggedIn', 'true');
+          // คำนวณหาระบบการเก็บชื่อ (เผื่อโครงสร้างเก่าเก็บเป็น name โครงสร้างใหม่เก็บเป็น first_name/last_name)
+          const fName = teacherData.first_name || teacherData.name || '';
+          const lName = teacherData.last_name || '';
+          const teacherFullName = `${fName} ${lName}`.trim();
+
+          localStorage.setItem('userName',      teacherData.username || '');
+          localStorage.setItem('userFirstName', fName); 
+          localStorage.setItem('userLastName',  lName); 
+          localStorage.setItem('userMajor',     teacherData.category || ''); 
+          localStorage.setItem('role',          'teacher'); // 🔑 เคลียร์สิทธิ์ความปลอดภัยหลักป้องกันหน้าจอเตะออก
+          localStorage.setItem('userRole',      'teacher'); 
+          localStorage.setItem('isLoggedIn',    'true');
+          sessionStorage.setItem('isLoggedIn',  'true');
+
+          // ลบสิทธิ์ของเด็กออกเพื่อป้องกันหน้าเว็บสับสนโครงสร้าง UI
+          localStorage.removeItem('userPhone');
+          localStorage.removeItem('userLevel');
+          localStorage.removeItem('registeredCourses');
 
           Swal.fire({
             icon: 'success',
             title: 'เข้าสู่ระบบผู้ดูแลสำเร็จ!',
-            html: `สวัสดีครับคุณครู <b>${teacherData.name}</b>`,
+            html: `สวัสดีครับคุณครู <b>${teacherFullName || 'ผู้ดูแลระบบ'}</b>`,
             showConfirmButton: false,
-            timer: 600,
+            timer: 700,
             timerProgressBar: true,
             backdrop: 'rgba(0,0,0,0.4)',
           }).then(() => {
-            // 🔥 ปรับแก้: ล็อกอินครูเสร็จ ให้วิ่งตรงไปที่หน้าโปรไฟล์ครูเพื่อจัดการวิชาของตัวเองทันที
             navigate('/teacher-profile', { replace: true });
           });
 
@@ -322,7 +341,6 @@ const Login = () => {
   );
 };
 
-// 🎨 เพิ่มชุดตกแต่งแผงปุ่มสลับประเภทผู้ใช้งานด้านล่างนี้
 const styles = {
   container: { display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '20px', background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #7c3aed 100%)', fontFamily: "'Kanit', sans-serif" },
   card:      { background: '#fff', borderRadius: '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', width: '100%', maxWidth: '420px', overflow: 'hidden' },
@@ -330,12 +348,9 @@ const styles = {
   logoBox:   { width: 52, height: 52, borderRadius: 14, margin: '0 auto 12px', background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700, color: '#fff' },
   title:     { margin: 0, fontSize: '22px', fontWeight: 700, color: '#fff' },
   subtitle:  { margin: '4px 0 0', fontSize: '13px', opacity: 0.8, color: '#bfdbfe' },
-  
-  // สไตล์สำหรับแถบปุ่มสลับ นักเรียน / ครู
   tabContainer: { display: 'flex', background: '#f1f5f9', padding: '6px', margin: '20px 32px 0 32px', borderRadius: '12px' },
   tabButton: { flex: 1, padding: '10px', border: 'none', background: 'transparent', borderRadius: '8px', fontSize: '13px', fontWeight: '600', color: '#64748b', cursor: 'pointer', transition: 'all 0.2s', fontFamily: "'Kanit', sans-serif" },
   activeTab: { background: '#fff', color: '#2563eb', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' },
-
   lockBanner:{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fef2f2', borderBottom: '1px solid #fecaca', padding: '10px 20px', fontSize: '13px', color: '#991b1b' },
   form:      { display: 'flex', flexDirection: 'column', padding: '20px 32px 20px' },
   inputGroup:{ marginBottom: '18px' },

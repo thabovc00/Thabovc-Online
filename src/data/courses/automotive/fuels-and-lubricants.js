@@ -2,7 +2,7 @@
 
 export const fuelsLubricantsData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อป้องกันการซ้ำซ้อน
-  id: "20101-2006-fuels-and-lubricants", 
+  id: "20101-2006-เชื้อเพลิงและวัสดุหล่อลื่น", 
   subjectCode: "20101-2006", 
   teacher: "ครูนลินนิภา", 
   subject: "เชื้อเพลิงและวัสดุหล่อลื่น",

@@ -2,7 +2,7 @@
 
 export const anatomyPhysiologyData = {
   // ใช้ ID ที่พ่วงรหัสวิชา
-  id: "21300-1001-anatomy-physiology", 
+  id: "21300-1001-โครงสร้างพื้นฐานทางกายวิภาคและสรีระมนุษย์", 
   subjectCode: "21300-1001", 
   teacher: "ครูรัฐกาญจน์", 
   subject: "โครงสร้างพื้นฐานทางกายวิภาคและสรีระมนุษย์",

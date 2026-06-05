@@ -2,7 +2,7 @@
 
 export const wordProcessingData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อป้องกันการซ้ำซ้อน
-  id: "21910-2004-word-processing", 
+  id: "21910-2004-โปรแกรมประมวลผลคำ", 
   subjectCode: "21910-2004", 
   teacher: "ครูเทพาธิป", 
   subject: "โปรแกรมประมวลผลคำ",

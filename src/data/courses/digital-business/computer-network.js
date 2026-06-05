@@ -1,5 +1,5 @@
 export const computerNetworkData = {
-  id: "computer-network",
+  id: "21910-2013-ระบบเครือข่ายคอมพิวเตอร์",
   subjectCode: "21910-2013",
   teacher: "ครูเตชสิทธิ์ สิงโตงาม (ครูแบงค์)",
   subject: "ระบบเครือข่ายคอมพิวเตอร์",

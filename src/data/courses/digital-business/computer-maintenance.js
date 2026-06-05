@@ -2,7 +2,7 @@
 
 export const computerMaintenanceData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อป้องกันการซ้ำซ้อน
-  id: "21910-2018-computer-maintenance", 
+  id: "21910-2018-คอมพิวเตอร์และการบำรุงรักษา", 
   subjectCode: "21910-2018", 
   teacher: "ครูเทพาธิป", 
   subject: "คอมพิวเตอร์และการบำรุงรักษา",

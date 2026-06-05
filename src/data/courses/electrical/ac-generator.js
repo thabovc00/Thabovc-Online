@@ -1,5 +1,5 @@
 export const acGeneratorData = {
-  id: "ac-generator",
+  id: "20104-2014-เครื่องกำเนิดไฟฟ้ากระแสสลับ",
   subjectCode: "20104-2014",
   teacher: "ครูกำพล เพ็งอังคาร (ครูต่อ)",
   subject: "เครื่องกำเนิดไฟฟ้ากระแสสลับ",

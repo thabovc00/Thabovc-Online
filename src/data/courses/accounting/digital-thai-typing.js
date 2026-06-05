@@ -2,7 +2,7 @@
 
 export const digitalThaiTypingData = {
   // ใช้ ID ที่พ่วงรหัสวิชา 20200-1004
-  id: "20200-1004-digital-thai-typing", 
+  id: "20200-1004-พิมพ์ไทยดิจิทัล", 
   subjectCode: "20200-1004", 
   teacher: "ครูเทพาธิป", 
   subject: "พิมพ์ไทยดิจิทัล",

@@ -1,5 +1,5 @@
 export const internetEnglishData = {
-  id: "internet-english",
+  id: "20000-1205-ภาษาอังกฤษอินเตอร์เน็ต",
   subjectCode: "20000-1205",
   teacher: "นายธรรณกรณ์ ไกรจักร์ (ครูฟิว)",
   subject: "ภาษาอังกฤษอินเตอร์เน็ต",

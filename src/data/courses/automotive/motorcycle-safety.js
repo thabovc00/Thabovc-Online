@@ -1,5 +1,5 @@
 export const motorcycleSafetyData = {
-  id: "motorcycle-safety",
+  id: "20101-2039-งานความปลอดภัยในการใช้รถจักรยานยนต์",
   subjectCode: "20101-2039",
   teacher: "นางสาวนลินนิภา แสนชาติ (ครูจอย)",
   subject: "งานความปลอดภัยในการใช้รถจักรยานยนต์",

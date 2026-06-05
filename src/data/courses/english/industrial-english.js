@@ -1,5 +1,5 @@
 export const industrialEnglishData = {
-  id: "industrial-english",
+  id: "20101-2039-ภาษาอังกฤษเพื่องานช่างอุตสาหกรรม",
   subjectCode: "20101-2039",
   teacher: "นายธรรณกรณ์ ไกรจักร์ (ครูฟิว)",
   subject: "ภาษาอังกฤษเพื่องานช่างอุตสาหกรรม",

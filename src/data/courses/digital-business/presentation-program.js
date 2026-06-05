@@ -1,5 +1,5 @@
 export const presentationProgramData = {
-  id: "presentation-program",
+  id: "21910-2006-โปรแกรมนำเสนอ",
   subjectCode: "21910-2006",
   teacher: "ครูเตชสิทธิ์ สิงโตงาม (ครูแบงค์)",
   subject: "โปรแกรมนำเสนอ",

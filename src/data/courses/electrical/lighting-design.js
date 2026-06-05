@@ -2,7 +2,7 @@
 
 export const lightingDesignData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อป้องกันการสับสน
-  id: "20104-2023-lighting-design", 
+  id: "20104-2023-การออกแบบระบบแสงสว่าง", 
   subjectCode: "20104-2023", 
   teacher: "ครูกำพล", 
   subject: "การส่องสว่าง",

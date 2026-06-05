@@ -2,7 +2,7 @@
 
 export const merchandisingAccounting1Data = {
   // ใช้ ID ที่พ่วงรหัสวิชา 20201-2001
-  id: "20201-2001-merchandising-accounting-1", 
+  id: "20201-2001-การบัญชีธุรกิจซื้อขายสินค้า 1", 
   subjectCode: "20201-2001", 
   teacher: "ครูไพลิน", 
   subject: "การบัญชีธุรกิจซื้อขายสินค้า 1",

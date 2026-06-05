@@ -2,7 +2,7 @@
 
 export const healthEduDegenerationData = {
   // ใช้ ID ที่พ่วงรหัสวิชา 21302-2011 เพื่อความแม่นยำ
-  id: "21302-2011-health-edu-degeneration", 
+  id: "21302-2011-สุขศึกษาและความเสื่อมทางกาย", 
   subjectCode: "21302-2011", 
   teacher: "ครูรัฐกาญจน์", 
   subject: "สุขศึกษาและความเสื่อมทางกาย",

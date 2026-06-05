@@ -2,7 +2,7 @@
 
 export const basicSellingMarketingData = {
   // ใช้ ID ที่พ่วงรหัสวิชา 20200-1002
-  id: "20200-1002-basic-selling-marketing", 
+  id: "20200-1002-การขายและการตลาดเบื้องต้น", 
   subjectCode: "20200-1002", 
   teacher: "ครูไพลิน", 
   subject: "การขายและการตลาดเบื้องต้น",

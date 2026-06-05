@@ -1,5 +1,5 @@
 export const computerMathData = {
-  id: "computer-math",
+  id: "21910-2009-คณิตศาสตร์คอมพิวเตอร์",
   subjectCode: "21910-2009",
   teacher: "ครูเตชสิทธิ์ สิงโตงาม (ครูแบงค์)",
   subject: "คณิตศาสตร์คอมพิวเตอร์",

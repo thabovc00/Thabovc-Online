@@ -1,5 +1,5 @@
 export const mobileDevelopmentData = {
-  id: "mobile-development",
+  id: "201910-2017-การพัฒนาโปรแกรมบนอุปกรณ์พกพาเบื้องต้น",
   subjectCode: "201910-2017",
   teacher: "ครูเตชสิทธิ์ สิงโตงาม (ครูแบงค์)",
   subject: "การพัฒนาโปรแกรมบนอุปกรณ์พกพาเบื้องต้น",

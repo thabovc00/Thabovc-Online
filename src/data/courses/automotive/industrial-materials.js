@@ -2,7 +2,7 @@
 
 export const industrialMaterialsData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อความชัดเจน
-  id: "20100-1002-industrial-materials", 
+  id: "20100-1002-วัสดุช่างอุตสาหกรรม", 
   subjectCode: "20100-1002", 
   teacher: "ครูขจรเกียรติ", 
   subject: "วัสดุช่างอุตสาหกรรม",

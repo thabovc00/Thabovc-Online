@@ -1,5 +1,5 @@
 export const businessThaiData = {
-  id: "business-thai",
+  id: "20000-1103-ภาษาไทยธุรกิจ",
   subjectCode: "20000-1103",
   teacher: "นายภาคิณ ภูดิน (ครูที)",
   subject: "ภาษาไทยธุรกิจ",

@@ -2,7 +2,7 @@
 
 export const motorcycleMechanicData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อความชัดเจน
-  id: "20101-2011-motorcycle-mechanic", 
+  id: "20101-2011-งานจักรยานยนต์", 
   subjectCode: "20101-2011", 
   teacher: "ครูนลินนิภา", 
   subject: "งานจักรยานยนต์",

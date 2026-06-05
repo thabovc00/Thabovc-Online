@@ -1,5 +1,5 @@
 export const energyManagementData = {
-  id: "energy-management",
+  id: "20104-2025-เทคนิคการจัดการพลังงาน",
   subjectCode: "20104-2025",
   teacher: "ครูกำพล เพ็งอังคาร (ครูต่อ)",
   subject: "เทคนิคการจัดการพลังงาน",

@@ -2,7 +2,7 @@
 
 export const buildingElectricalInstallationData = {
   // ใช้ ID ที่พ่วงรหัสวิชา
-  id: "20104-2005-building-electrical", 
+  id: "20104-2005-การติดตั้งไฟฟ้าในอาคาร", 
   subjectCode: "20104-2005", 
   teacher: "ครูกำพล", 
   subject: "การติดตั้งไฟฟ้าในอาคาร",

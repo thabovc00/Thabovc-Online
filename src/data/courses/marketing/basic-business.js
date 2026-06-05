@@ -2,7 +2,7 @@
 
 export const basicBusinessData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อป้องกันการซ้ำซ้อน
-  id: "20000-1003-basic-business", 
+  id: "20000-1003-ธุรกิจเบื้องต้น", 
   subjectCode: "20001-1003", 
   teacher: "ครูอุวรา", 
   subject: "ธุรกิจเบื้องต้น",

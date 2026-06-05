@@ -1,7 +1,7 @@
 export const firstAidServiceData = {
-  id: "first-aid-service",
+  id: "21302-2002-การบริการและปฐมพยาบาลเบื้องต้น",
   subjectCode: "21302-2002",
-  teacher: "นางสาวกมลวรรณ สุวรรณเหลา (ครูมิ้น)",
+  teacher: "ครูกมลวรรณ สุวรรณเหลา (ครูมิ้น)",
   subject: "การบริการและปฐมพยาบาลเบื้องต้น",
   category: "hospital-business",
   level: "ปวช.2",

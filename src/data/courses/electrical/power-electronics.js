@@ -1,5 +1,5 @@
 export const powerElectronicsData = {
-  id: "power-electronics",
+  id: "20104-2019-อิเล็กทรอนิกส์กำลังเบื้องต้น",
   subjectCode: "20104-2019",
   teacher: "นายเทพาธิป ใจยั่งยืน (ครูเส)",
   subject: "อิเล็กทรอนิกส์กำลังเบื้องต้น",

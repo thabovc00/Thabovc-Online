@@ -1,5 +1,5 @@
 export const refrigerationData = {
-  id: "refrigeration",
+  id: "20104-2007-เครื่องทำความเย็น",
   subjectCode: "20104-2007",
   teacher: "ครูกำพล เพ็งอังคาร (ครูต่อ)",
   subject: "เครื่องทำความเย็น",

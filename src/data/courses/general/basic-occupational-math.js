@@ -1,5 +1,5 @@
 export const basicOccupationalMathData = {
-  id: "basic-occupational-math",
+  id: "20000-1401-คณิตศาสตร์พื้นฐานอาชีพ",
   subjectCode: "20000-1401",
   teacher: "ครูรัฐกาญจน์ ศรีวิโรจน์วงศ์ (ครูกิ่ง)",
   subject: "คณิตศาสตร์พื้นฐานอาชีพ",

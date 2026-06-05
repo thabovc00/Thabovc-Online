@@ -1,5 +1,5 @@
 export const mechanicalMechanicsData = {
-  id: "mechanical-mechanics",
+  id: "20101-2007-กลศาสตร์เครื่องกล",
   subjectCode: "20101-2007",
   teacher: "นายขจรเกียรติ ผิวเพชร (ครูเบนซ์)",
   subject: "กลศาสตร์เครื่องกล",

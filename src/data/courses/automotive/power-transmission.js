@@ -1,5 +1,5 @@
 export const powerTransmissionData = {
-  id: "power-transmission",
+  id: "20101-2004-งานส่งกำลังรถยนต์",
   subjectCode: "20101-2004",
   teacher: "นายขจรเกียรติ ผิวเพชร (ครูเบนซ์)",
   subject: "งานส่งกำลังรถยนต์",

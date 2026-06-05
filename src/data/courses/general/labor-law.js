@@ -1,5 +1,5 @@
 export const laborLawData = {
-  id: "labor-law",
+  id: "20001-1004-กฎหมายแรงงาน",
   subjectCode: "20001-1004",
   teacher: "นายสมศักดิ์ พรมภักดี (ครูทิว)",
   subject: "กฎหมายแรงงาน",

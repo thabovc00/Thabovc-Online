@@ -2,7 +2,7 @@
 
 export const basicAccountingData = {
   // ใช้ ID ที่พ่วงรหัสวิชา 20200-1003
-  id: "20200-1003-basic-accounting", 
+  id: "20200-1003-การบัญชีเบื้องต้น", 
   subjectCode: "20200-1003", 
   teacher: "ครูไพลิน", 
   subject: "การบัญชีเบื้องต้น",

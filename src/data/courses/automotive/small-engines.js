@@ -2,7 +2,7 @@
 
 export const smallEnginesData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อความชัดเจน
-  id: "20101-2010-small-engines", 
+  id: "20101-2010-งานเครื่องยนต์เล็ก", 
   subjectCode: "20101-2010", 
   teacher: "ครูขจรเกียรติ", 
   subject: "งานเครื่องยนต์เล็ก",

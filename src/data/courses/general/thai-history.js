@@ -2,7 +2,7 @@
 
 export const thaiHistoryData = {
   // ใช้ ID ที่พ่วงรหัสวิชา 20000-1502
-  id: "20000-1502-thai-history", 
+  id: "20000-1502-ประวัติศาสตร์ชาติไทย", 
   subjectCode: "20000-1502", 
   teacher: "ครูจิราพร", 
   subject: "ประวัติศาสตร์ชาติไทย",

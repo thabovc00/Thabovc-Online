@@ -1,7 +1,7 @@
 // src/data/courses/english-communication.js
 
 export const englishCommunicationData = {
-  id: "english-communication", // ID สำหรับใช้ทำลิงก์ URL
+  id: "20000-1201-ภาษาอังกฤษเพื่อการสื่อสาร", // ID สำหรับใช้ทำลิงก์ URL
   subjectCode: "20000-1201", 
   teacher: "ครูกมลวรรณ", 
   subject: "ภาษาอังกฤษเพื่อการสื่อสาร",

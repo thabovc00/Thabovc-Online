@@ -1,5 +1,5 @@
 export const physicalEducationData = {
-  id: "physical-education",
+  id: "20000-1603-พลศึกษาเพื่อพัฒนาสุขภาพ",
   subjectCode: "20000-1603",
   teacher: "นายเทพาธิป ใจยั่งยืน (ครูเส)",
   subject: "พลศึกษาเพื่อพัฒนาสุขภาพ",

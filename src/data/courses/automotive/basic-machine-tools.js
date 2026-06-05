@@ -2,7 +2,7 @@
 
 export const basicMachineToolsData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อความชัดเจนและป้องกันการซ้ำซ้อน
-  id: "20100-1006-basic-machine-tools", 
+  id: "20100-1006-งานเครื่องมือกลเบื้องต้น", 
   subjectCode: "20100-1006", 
   teacher: "ครูนลินนิภา", 
   subject: "งานเครื่องมือกลเบื้องต้น",

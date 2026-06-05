@@ -2,7 +2,7 @@
 
 export const weldingSheetMetalData = {
   // ใช้ ID ที่พ่วงรหัสวิชาเพื่อความชัดเจน
-  id: "20100-1004-welding-and-sheet-metal", 
+  id: "20100-1004-งานเชื่อมและโลหะแผ่นเบื้องต้น", 
   subjectCode: "20100-1004", 
   teacher: "ครูนลินนิภา", 
   subject: "งานเชื่อมและโลหะแผ่นเบื้องต้น",
