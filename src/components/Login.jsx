@@ -69,7 +69,9 @@ const Login = () => {
     e.preventDefault();
 
     const rl = getRateLimit();
+    // eslint-disable-next-line react-hooks/purity
     if (rl.lockedUntil && Date.now() < rl.lockedUntil) {
+      // eslint-disable-next-line react-hooks/purity
       const mins = Math.ceil((rl.lockedUntil - Date.now()) / 60000);
       Swal.fire({ icon: 'error', title: 'บัญชีถูกล็อกชั่วคราว', text: `กรุณารอ ${mins} นาทีแล้วลองใหม่`, confirmButtonColor: '#ef4444', width: '350px' });
       return;
