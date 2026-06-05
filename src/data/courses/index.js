@@ -52,6 +52,9 @@ import {acMotorData} from "./electrical/ac-motor";
 import {energyManagementData} from "./electrical/energy-management";
 import {acGeneratorData } from "./electrical/ac-generator";
 import {powerElectronicsData} from "./electrical/power-electronics";
+import { laborLawData } from "./general/labor-law"; // 1. import เพิ่มตรงนี้
+import { firstAidServiceData } from "./hospital-business/first-aid-service"; // 2. import เพิ่มตรงนี้
+import {medicalEquipmentData} from "./hospital-business/medical-equipment"; // 3. import เพิ่มตรงนี้
 export const courses = [
   
   appliedProgrammingData,
@@ -107,6 +110,9 @@ export const courses = [
   energyManagementData, // 24. เพิ่มเข้ามาในอาร์เรย์หลัก
   acGeneratorData, // 25. เพิ่มเข้ามาในอาร์เรย์หลัก
   powerElectronicsData, // 26. เพิ่มเข้ามาในอาร์เรย์หลัก
+  laborLawData, // 27. เพิ่มเข้ามาในอาร์เรย์หลัก
+  firstAidServiceData, // 28. เพิ่มเข้ามาในอาร์เรย์หลัก
+  medicalEquipmentData, // 29. เพิ่มเข้ามาในอาร์เรย์หลัก
 ];
 
 export const categories = [
