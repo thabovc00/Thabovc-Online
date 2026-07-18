@@ -5,7 +5,7 @@ export const laborLawData = {
   subject: "กฎหมายแรงงาน",
   category: "general",
   level: "ปวช.2",
-  targetMajors: ["ทุกสาขาวิชา"],
+targetMajors: ["all"],
 
   videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
   contentTitle: "ความรู้พื้นฐานเกี่ยวกับกฎหมายแรงงานเพื่อการทำงาน",

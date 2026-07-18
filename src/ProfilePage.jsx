@@ -25,7 +25,7 @@ export default function ProfilePage() {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
   const [studentInfo, setStudentInfo] = useState({
-    name: "", major: "", level: "", initial: "S", username: ""
+    name: "", major: "", level: "", initial: "S", username: "", rawMajor: ""
   });
   const [myCourses, setMyCourses]             = useState([]);
   const [isDeleting, setIsDeleting]           = useState(null);
@@ -44,13 +44,18 @@ export default function ProfilePage() {
     const firstName = localStorage.getItem("userFirstName") || "";
     const lastName  = localStorage.getItem("userLastName")  || "";
     const major     = localStorage.getItem("userMajor")     || "";
-    const level     = localStorage.getItem("userLevel")     || "";
+    const level     = localStorage.getItem("userLevel")     || ""; // เช่น ปวช.1, ปวช.2, ปวช.3
     const username  = localStorage.getItem("userName")      || "";
+    
     setStudentInfo({
       name:    firstName ? `${firstName} ${lastName}` : "นักศึกษา LearnHub",
       major:   majorTranslations[major] || major || "ทั่วไป",
-      level, initial: firstName ? firstName.charAt(0) : "S", username
+      rawMajor: major, // เก็บค่าดิบไว้ใช้แปลเป็นภาษาไทยในชื่อไฟล์
+      level, 
+      initial: firstName ? firstName.charAt(0) : "S", 
+      username
     });
+    
     const fetch_ = async () => {
       if (!username) return;
       try {
@@ -68,8 +73,41 @@ export default function ProfilePage() {
       }
     };
     fetch_();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn]);
+
+  // 📅 ฟังก์ชันสำหรับกดดูตารางเรียนแบบ Dynamic (อิงตามระดับชั้นและสาขา)
+ // 📅 ฟังก์ชันสำหรับกดดูตารางเรียนแบบ Dynamic (รองรับ ปวช. 101-301 และ ปวส. 1001-1002)
+  // 📅 ฟังก์ชันสำหรับกดดูตารางเรียนแบบ Dynamic (เวอร์ชันตัดเลขท้ายออก เพื่อให้คุณครูตั้งชื่อไฟล์ง่ายที่สุด)
+  const handleViewSchedule = () => {
+    const currentLevel = studentInfo.level || "ปวช.1"; 
+    const currentMajorTh = studentInfo.major || "ทั่วไป"; 
+    
+    // 🔗 ระบบจะดึงชื่อสาขาตรง ๆ มาต่อท้าย เช่น /images/ตารางเรียนปวช.1/เทคโนโลยีธุรกิจดิจิทัล.png
+    const scheduleImagePath = `/images/ตารางเรียน${currentLevel}/${currentMajorTh}.png`;
+
+    Swal.fire({
+      title: `📅 ตารางเรียนชั้น ${currentLevel}`,
+      text: `สาขาวิชา${currentMajorTh}`,
+      imageUrl: scheduleImagePath,
+      imageAlt: `ตารางเรียน ${currentLevel} ${currentMajorTh}`,
+      imageWidth: 550,
+      imageHeight: 380,
+      customClass: {
+        image: 'object-contain rounded-lg border border-slate-200'
+      },
+      showCancelButton: true,
+      confirmButtonColor: "#64748b", 
+      cancelButtonColor: "#2563eb",  
+      confirmButtonText: "❌ ปิดหน้าต่าง",
+      cancelButtonText: "🔗 เปิดรูปภาพขนาดเต็ม",
+      allowOutsideClick: true,
+      allowEscapeKey: true
+    }).then((result) => {
+      if (result.dismiss === Swal.DismissReason.cancel) {
+        window.open(scheduleImagePath, '_blank');
+      }
+    });
+  };
 
   const handleUnenroll = (course) => {
     Swal.fire({
@@ -139,14 +177,12 @@ export default function ProfilePage() {
           style={{ width: 16, height: 16, marginTop: 3, cursor: "pointer", accentColor: "#ef4444", flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* ชื่อวิชา */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <span style={{ width: 4, height: 40, borderRadius: 4, background: course.color || "#2563eb", flexShrink: 0 }} />
             <span style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", lineHeight: 1.4 }}>
               {course.subject}
             </span>
           </div>
-          {/* รหัสวิชา + ผู้สอน */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingLeft: 12 }}>
             <span style={{ background: "#f1f5f9", color: "#64748b", padding: "2px 8px", borderRadius: 4, fontSize: 12, fontWeight: 600 }}>
               {course.subjectCode}
@@ -155,7 +191,6 @@ export default function ProfilePage() {
               {course.teacher}
             </span>
           </div>
-          {/* ปุ่ม */}
           <div style={{ display: "flex", gap: 8, marginTop: 10, paddingLeft: 12 }}>
             <button onClick={() => navigate(`/course/${course.id}`)} style={{
               padding: "6px 14px", borderRadius: 8, border: "1px solid #bfdbfe",
@@ -254,10 +289,36 @@ export default function ProfilePage() {
               <p style={{ fontSize: 14, fontWeight: 600, color: "#334155", margin: 0 }}>{item.value}</p>
             </div>
           ))}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, fontSize: 13, color: "#10b981", fontWeight: 600 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, mt: 4, fontSize: 13, color: "#10b981", fontWeight: 600, marginBottom: 20 }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981" }} />
             ออนไลน์กำลังใช้งาน
           </div>
+
+          {/* 📅 ปุ่มกดดูตารางเรียนแบบ Dynamic เพิ่มใหม่ตามบรีฟ */}
+          <button 
+            onClick={handleViewSchedule}
+            style={{
+              width: "100%",
+              padding: "11px 16px",
+              background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "12px",
+              fontSize: "13px",
+              fontWeight: "700",
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              transition: "transform 0.1s"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.02)"}
+            onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+          >
+            📅 ดูตารางเรียนของฉัน
+          </button>
         </aside>
 
         {/* ── Main ── */}

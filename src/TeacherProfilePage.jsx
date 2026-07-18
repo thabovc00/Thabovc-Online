@@ -139,12 +139,12 @@ export default function TeacherProfilePage() {
           setTeacherInfo({
             name: fullName || "คุณครูผู้ดูแลระบบ",
             initial: fName ? fName.charAt(0) : "เ",
-            username: localUsername,
+            username: localUsername.trim(),
             major: teacherData.category || "ช่างยนต์", 
             avatarUrl: rawAvatarUrl 
           });
 
-          fetchTeacherCourses(localUsername);
+          fetchTeacherCourses(localUsername.trim());
         }
       } catch (err) {
         console.error("Error fetching live profile:", err.message);
@@ -197,6 +197,9 @@ export default function TeacherProfilePage() {
     }
   };
 
+  // เช็คเงื่อนไขว่าเป็น ID saywang01 หรือ อีเมลแอดมินกลาง ของวิทยาลัยหรือไม่
+  const isAuthorizedManager = teacherInfo.username === "saywang01" || localStorage.getItem("userEmail") === "admin@thabovc.ac.th";
+
   return (
     <>
       {/* แทรก Style ย่อยสำหรับทำให้รูป Preview ใน SweetAlert กลมสวยงาม */}
@@ -215,7 +218,7 @@ export default function TeacherProfilePage() {
         {/* Sidebar ครู */}
         <aside style={{ width: isMobile ? "100%" : 280, flexShrink: 0, background: "#fff", borderRadius: 20, border: "1px solid #e2e8f0", padding: "28px 20px", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.04)", position: isMobile ? "static" : "sticky", top: 88 }}>
           
-          {/* ส่วนการแสดงผลรูปภาพโปรไฟล์จริง (เพิ่ม Cursor pointer สื่อว่ากดได้) */}
+          {/* ส่วนการแสดงผลรูปภาพโปรไฟล์จริง */}
           <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
             {teacherInfo.avatarUrl ? (
               <div 
@@ -231,7 +234,6 @@ export default function TeacherProfilePage() {
                   referrerPolicy="no-referrer"
                   style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", border: "3px solid #16a34a", display: "block" }} 
                 />
-                {/* ไอคอนแว่นขยายเล็กๆ ที่มุมภาพ */}
                 <div style={{ position: "absolute", bottom: 0, right: 0, background: "#16a34a", color: "#fff", width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, border: "2px solid #fff" }}>
                   🔍
                 </div>
@@ -266,7 +268,40 @@ export default function TeacherProfilePage() {
             </p>
           </div>
 
-          {/* 🚪 ปุ่มออกจากระบบสำหรับ Desktop และ Mobile (ดีไซน์กระชับ ใช้งานง่าย) */}
+          {/* 🛠️ ปุ่มลิงก์ไปตารางเรียนหลัก: จะแสดงผลให้เห็นเฉพาะไอดี saywang01 หรือ admin เท่านั้น */}
+          {isAuthorizedManager && (
+            <button
+              onClick={() => navigate("/schedule")} // สมมุติว่า Route หน้าตารางเรียนคุณตั้งชื่อว่า /schedule
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                background: "#16a34a",
+                color: "#fff",
+                border: "none",
+                borderRadius: "12px",
+                fontSize: "13px",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                marginBottom: "10px",
+                boxShadow: "0 4px 12px rgba(22, 163, 74, 0.2)",
+                transition: "all 0.2s"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#15803d";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#16a34a";
+              }}
+            >
+              📅 จัดการตารางเรียนกลาง
+            </button>
+          )}
+
+          {/* 🚪 ปุ่มออกจากระบบ */}
           <button
             onClick={handleLogout}
             style={{

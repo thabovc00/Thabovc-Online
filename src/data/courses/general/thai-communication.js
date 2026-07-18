@@ -4,7 +4,7 @@ export const thaiCommunicationData = {
   teacher: "ครูจิราพร", // เปลี่ยนชื่อคุณครูตามจริง
   subject: "ภาษาไทยเพื่อการสื่อสาร",
   category: "general", // หรือเปลี่ยนเป็น 'language' ตามหมวดหมู่ของคุณครู
-  level: "ปวช.1,",  
+  level: "ปวช.1", // ระดับชั้น ปวช.1
   videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", // วิดีโอแนะนำรายวิชา
   targetMajors: ["all"], // ใส่ดักไว้ทั้ง 2 คำเลยเผื่อเด็กพิมพ์/เลือกมาต่างกัน
   contentTitle: "ศิลปะการใช้ภาษาเพื่อการสื่อสารที่มีประสิทธิภาพ",

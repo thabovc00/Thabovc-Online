@@ -26,11 +26,6 @@ export default function CoursesPage() {
   const [isSubmitting, setIsSubmitting] = useState(null); 
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCurrentPage(1);
-  }, [activeCategory, activeLevel, search]);
-
-  useEffect(() => {
     const fetchUserCourses = async () => {
       if (!isLoggedIn || !username) return;
 
@@ -76,26 +71,28 @@ export default function CoursesPage() {
     }
 
     Swal.fire({
-      icon: "question",
-      title: "ยืนยันการลงทะเบียนเรียน?",
-      html: `คุณต้องการลงทะเบียนเรียนในรายวิชา<br><b>${course.subject}</b> ใช่หรือไม่?`,
-      showCancelButton: true,
-      confirmButtonColor: "#10b981",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "ยืนยันลงทะเบียน",
-      cancelButtonText: "ยกเลิก"
+  icon: "question",
+  // highlight-start
+  title: '<span style="font-size: 24px;">ยืนยันการลงทะเบียนเรียน?</span>', // ปรับขนาดตามต้องการ เช่น 20px, 24px
+  // highlight-end
+  html: `คุณต้องการลงทะเบียนเรียนในรายวิชา<br><b>${course.subject}</b> ใช่หรือไม่?`,
+  showCancelButton: true,
+  confirmButtonColor: "#10b981",
+  cancelButtonColor: "#64748b",
+  confirmButtonText: "ยืนยันลงทะเบียน",
+  cancelButtonText: "ยกเลิก"
     }).then(async (result) => {
       if (!result.isConfirmed) return;
 
       setIsSubmitting(course.id);
       try {
         const { error } = await supabase
-          .from("enrollments")
-          .insert([{ 
-            username: username,
-            course_id: course.id,
-            student_id: localStorage.getItem('userFirstName') + ' ' + localStorage.getItem('userLastName'),
-          }]);
+  .from("enrollments")
+  .insert([{ 
+    username: username,
+    course_id: course.id,
+    full_name: localStorage.getItem('userFirstName') + ' ' + localStorage.getItem('userLastName'), // จุดนี้
+  }]);
 
         if (error) throw error;
 
@@ -122,15 +119,17 @@ export default function CoursesPage() {
   const handleTeacherRegister = async (e, course) => {
     e.stopPropagation();
 
-    Swal.fire({
-      icon: "info",
-      title: "ยืนยันการลงทะเบียนสอน?",
-      html: `คุณต้องการลงทะเบียนเป็นผู้สอนในรายวิชา<br><b>${course.subject}</b> ใช่หรือไม่?`,
-      showCancelButton: true,
-      confirmButtonColor: "#3b82f6",
-      cancelButtonColor: "#64748b",
-      confirmButtonText: "ยืนยันเป็นผู้สอน",
-      cancelButtonText: "ยกเลิก"
+   Swal.fire({
+  icon: "question",
+  // highlight-start
+  title: '<span style="font-size: 24px;">ยืนยันการลงทะเบียนเรียน?</span>', // ปรับขนาดตามต้องการ เช่น 20px, 24px
+  // highlight-end
+  html: `คุณต้องการลงทะเบียนเรียนในรายวิชา<br><b>${course.subject}</b> ใช่หรือไม่?`,
+  showCancelButton: true,
+  confirmButtonColor: "#10b981",
+  cancelButtonColor: "#64748b",
+  confirmButtonText: "ยืนยันลงทะเบียน",
+  cancelButtonText: "ยกเลิก"
     }).then(async (result) => {
       if (!result.isConfirmed) return;
 
@@ -222,12 +221,18 @@ export default function CoursesPage() {
               type="text"
               placeholder="ค้นหาชื่อวิชา, รหัสวิชา หรือชื่อผู้สอน..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+  setSearch(e.target.value);
+  setCurrentPage(1); // รีเซ็ตหน้าตรงนี้เลย
+}}
               style={{ width: "100%", padding: "12px 16px", paddingLeft: "42px", borderRadius: "12px", border: "none", fontSize: "14px", outline: "none", color: "#1e293b", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }}
             />
             <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, opacity: 0.5 }}>🔍</span>
             {search && (
-              <button onClick={() => setSearch("")} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "#e2e8f0", border: "none", borderRadius: "50%", width: 20, height: 20, cursor: "pointer", color: "#64748b", fontSize: 10, fontWeight: "bold" }}>✕</button>
+              <button onClick={() => {
+  setSearch("");
+  setCurrentPage(1); // รีเซ็ตหน้าตรงนี้เลย
+}} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "#e2e8f0", border: "none", borderRadius: "50%", width: 20, height: 20, cursor: "pointer", color: "#64748b", fontSize: 10, fontWeight: "bold" }}>✕</button>
             )}
           </div>
         </div>
@@ -361,8 +366,8 @@ export default function CoursesPage() {
                 const isActive = activeCategory === cat.id;
                 
                 return (
-                  <button key={cat.id} className={`lh-cat-btn${isActive ? " active" : ""}`} onClick={() => setActiveCategory(cat.id)}>
-                    <span style={{ fontSize: 15 }}>{cat.icon}</span>
+  <button key={cat.id} className={`lh-cat-btn${isActive ? " active" : ""}`} onClick={() => { setActiveCategory(cat.id); setCurrentPage(1); }}>
+    <span style={{ fontSize: 15 }}>{cat.icon}</span>
                     <span style={{ flex: 1, textAlign: 'left' }}>{cat.label}</span>
                     <span style={{ background: isActive ? "#2563eb" : "#f1f5f9", color: isActive ? "#fff" : "#64748b", borderRadius: 10, padding: "2px 8px", fontSize: 11, fontWeight: 700, minWidth: 22, textAlign: "center" }}>{count}</span>
                   </button>
@@ -381,13 +386,13 @@ export default function CoursesPage() {
           <div className="lh-scroll-wrapper" style={{ marginBottom: 20 }}>
             <div className="lh-level-container" style={{ margin: 0 }}>
               {levels
-                .filter(lvl => !isLoggedIn || userRole === "teacher" || lvl.id === "all" || lvl.id === userLevel || lvl.label === userLevel)
-                .map((lvl) => (
-                <button
-                  key={lvl.id}
-                  className="lh-level-btn"
-                  onClick={() => setActiveLevel(lvl.id)}
-                  style={{
+  .filter(lvl => !isLoggedIn || userRole === "teacher" || lvl.id === "all" || lvl.id === userLevel || lvl.label === userLevel)
+  .map((lvl) => (
+  <button
+    key={lvl.id}
+    className="lh-level-btn"
+    onClick={() => { setActiveLevel(lvl.id); setCurrentPage(1); }}
+    style={{
                     padding: "8px 18px", borderRadius: "100px", border: "1px solid",
                     borderColor: activeLevel === lvl.id ? "#2563eb" : "#e2e8f0",
                     background: activeLevel === lvl.id ? "#2563eb" : "#fff",

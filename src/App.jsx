@@ -11,7 +11,7 @@ import Register from "./components/Register";
 import RegisterTeacher from "./components/RegisterTeacher"; // เพิ่มการนำเข้า RegisterTeacher
 import ProfilePage from "./ProfilePage";
 import TeacherProfilePage from "./TeacherProfilePage"; // เพิ่มการนำเข้า TeacherProfilePage
-
+import ScheduleTable from "./ScheduleTable"; // เพิ่มการนำเข้า ScheduleTable
 
 function App() {
   return (
@@ -31,6 +31,7 @@ function App() {
         <Route path="/ContactPage" element={<ContactPage />} />
         <Route path="/AnnouncementPage" element={<AnnouncementPage />} />
         <Route path="/teacher-profile" element={<TeacherProfilePage />} />
+        <Route path="/schedule" element={<ScheduleTable />} />
         {/* หน้าข้อมูลส่วนตัว */}
         <Route path="/profile" element={<ProfilePage />} /> 
         

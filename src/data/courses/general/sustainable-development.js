@@ -1,5 +1,3 @@
-// src/data/courses/sustainable-development.js
-
 export const sustainableDevelopmentData = {
   id: "20000-1002-การพัฒนาอย่างยั่งยืน", // ID สำหรับใช้ทำลิงก์ URL
   subjectCode: "20000-1002", 

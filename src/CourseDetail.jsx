@@ -148,7 +148,11 @@ export default function CourseDetail() {
 
         const { error } = await supabase
           .from("enrollments")
-          .insert([{ username: currentUsername, course_id: course.id }]);
+          .insert([{ 
+            username: currentUsername, 
+            course_id: course.id,
+            full_name: localStorage.getItem('userFirstName') + ' ' + localStorage.getItem('userLastName') // ✨ อัปเดตฟิลด์ให้ตรงกัน
+          }]);
 
         if (error) {
           if (error.code === "23505") {
@@ -179,20 +183,20 @@ export default function CourseDetail() {
     try {
       Swal.showLoading();
       
-      // 1. ดึงข้อมูลบทเรียนปกติ
+      // 1. ดึงข้อมูลบทเรียนปกติ (แก้ไข Fallback ป้องกันการเขียนทับด้วยค่าว่างเปล่า)
       const upsertData = course.lessons.map((lesson, index) => ({
         course_id: course.id,
         lesson_number: index,
-        url: editLessons[index]?.url || "",
-        title: editLessons[index]?.title || lesson.title 
+        url: editLessons[index]?.url ?? dbLessons[index]?.url ?? "",
+        title: editLessons[index]?.title ?? dbLessons[index]?.title ?? lesson.title 
       }));
 
       // 2. แนบชุดข้อมูลพิเศษสำหรับช่องทางการติดต่อครู (ใช้เลขอ้างอิงพิเศษ lesson_number = 99)
       upsertData.push({
         course_id: course.id,
         lesson_number: 99,
-        url: editLessons[99]?.url || "",
-        title: editLessons[99]?.title || "ติดต่อสอบถามคุณครู"
+        url: editLessons[99]?.url ?? dbLessons[99]?.url ?? "",
+        title: editLessons[99]?.title ?? dbLessons[99]?.title ?? "ติดต่อสอบถามคุณครู"
       });
 
       const { error } = await supabase
@@ -201,7 +205,14 @@ export default function CourseDetail() {
 
       if (error) throw error;
 
-      setDbLessons(editLessons);
+      // จัดการผสานข้อมูลสถานะล่าสุดให้สมบูรณ์
+      const finalUpdatedState = {};
+      upsertData.forEach(item => {
+        finalUpdatedState[item.lesson_number] = { url: item.url, title: item.title };
+      });
+
+      setDbLessons(finalUpdatedState);
+      setEditLessons(finalUpdatedState);
       setIsEditing(false);
       Swal.fire({ icon: 'success', title: 'บันทึกข้อมูลสำเร็จ', text: 'ข้อมูลรายวิชาและลิงก์ติดต่อได้รับการอัปเดตแล้ว', timer: 1500, showConfirmButton: false });
     } catch (err) {
@@ -416,12 +427,23 @@ export default function CourseDetail() {
                             {isRegistered ? "เข้าเรียน" : "ลงทะเบียน"}
                           </div>
                         )}
-                        {!isEditing && userRole === "teacher" && activeLink && (
+                        {!isEditing && userRole === "teacher" && (
                           <button 
-                            onClick={(e) => { e.stopPropagation(); window.open(activeLink, '_blank'); }}
-                            style={{ background: '#e0f2fe', color: '#0369a1', border: 'none', padding: '6px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: "nowrap" }}
+                            disabled={!activeLink}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              if (activeLink) window.open(activeLink, '_blank'); 
+                            }}
+                            style={{ 
+                              background: activeLink ? '#e0f2fe' : '#f1f5f9', 
+                              color: activeLink ? '#0369a1' : '#94a3b8', 
+                              border: 'none', padding: '6px 10px', borderRadius: 8, 
+                              fontSize: 11, fontWeight: 600, 
+                              cursor: activeLink ? 'pointer' : 'not-allowed', 
+                              whiteSpace: "nowrap" 
+                            }}
                           >
-                            ทดสอบลิงก์
+                            {activeLink ? "ทดสอบลิงก์" : "ไม่มีลิงก์"}
                           </button>
                         )}
                       </div>
@@ -437,32 +459,28 @@ export default function CourseDetail() {
             <div style={{ background: "#fff", borderRadius: 24, border: "1px solid #e2e8f0", padding: isMobile ? "20px" : "30px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
               
               {/* 📸 ส่วนที่ 1: รูปภาพครูแบบกดดูรูปใหญ่ขยายได้ (Lightbox) */}
-              {/* 📸 แก้ไขตรงจุดนี้ในไฟล์ CourseDetail.jsx */}
-<img 
-  src={course.avatar} 
-  style={{ 
-    width: 120, height: 155, borderRadius: 12, objectFit: "cover", 
-    border: `1px solid #e2e8f0`, boxShadow: "0 10px 20px rgba(0,0,0,0.05)", 
-    marginBottom: 16, cursor: "pointer", transition: "transform 0.2s" 
-  }} 
-  alt="Teacher"
-  onClick={() => {
-    Swal.fire({
-      imageUrl: course.avatar,
-      imageAlt: `รูปภาพอาจารย์ ${course.teacher}`,
-      
-      // 📐 เพิ่ม 2 บรรทัดนี้เข้าไปเพื่อควบคุมขนาดรูปตอน Pop-up ครับ
-      imageWidth: 240,   // ปรับความกว้างตามใจชอบ (หน่วยเป็น Pixel)
-      imageHeight: 310,  // ปรับความสูงให้สมส่วนกับรูปเดิมของคุณครู (120x155 อัตราส่วนเท่ากับ 240x310)
-      
-      title: `อาจารย์ ${course.teacher}`,
-      confirmButtonColor: course.color,
-      confirmButtonText: 'ปิดหน้าต่าง'
-    });
-  }}
-  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-/>
+              <img 
+                src={course.avatar} 
+                style={{ 
+                  width: 120, height: 155, borderRadius: 12, objectFit: "cover", 
+                  border: `1px solid #e2e8f0`, boxShadow: "0 10px 20px rgba(0,0,0,0.05)", 
+                  marginBottom: 16, cursor: "pointer", transition: "transform 0.2s" 
+                }} 
+                alt="Teacher"
+                onClick={() => {
+                  Swal.fire({
+                    imageUrl: course.avatar,
+                    imageAlt: `รูปภาพอาจารย์ ${course.teacher}`,
+                    imageWidth: 240,   
+                    imageHeight: 310,  
+                    title: `อาจารย์ ${course.teacher}`,
+                    confirmButtonColor: course.color,
+                    confirmButtonText: 'ปิดหน้าต่าง'
+                  });
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+              />
               
               <h3 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", margin: "0 0 4px 0" }}>{course.teacher}</h3>
               <p style={{ color: course.color, fontSize: 13, fontWeight: 600, marginBottom: 16 }}>อาจารย์ประจำสาขาวิชา</p>
@@ -470,7 +488,7 @@ export default function CourseDetail() {
                 "{course.teacherBio}"
               </div>
               
-              {/* 📞 ส่วนที่ 2: ปุ่มติดต่อครูประจำวิชา (ดึงข้อความปุ่มและลิงก์ไดนามิกตามที่บันทึกไว้ในโมดอล) */}
+              {/* 📞 ส่วนที่ 2: ปุ่มติดต่อครูประจำวิชา */}
               <button 
                 onClick={handleContactTeacher}
                 style={{ 
@@ -483,7 +501,7 @@ export default function CourseDetail() {
                   border: "none", 
                   fontWeight: 700, 
                   fontSize: 14, 
-                  cursor: "pointer", 
+                  cursor: teacherContactLink ? "pointer" : "not-allowed", 
                   boxShadow: teacherContactLink ? `0 10px 20px ${course.color}33` : "none",
                   transition: "all 0.2s"
                 }}

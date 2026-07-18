@@ -5,7 +5,7 @@ export const businessThaiData = {
   subject: "ภาษาไทยธุรกิจ",
   category: "general",
   level: "ปวช.2",
-  targetMajors: ["วิชาสามัญ"],
+ targetMajors: ["all"],
 
   videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
   contentTitle: "ทักษะภาษาไทยเพื่อการสื่อสารในงานอาชีพ",

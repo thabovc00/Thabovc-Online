@@ -1,6 +1,5 @@
 // src/data/courses/index.js
 import { appliedProgrammingData } from "./digital-business/applied-programming";
-import { thaiCommunicationData } from "./general/thai-communication";
 import { englishCommunicationData } from "./english/english-communication"; 
 import { healthSafetyData } from "./hospital-business/health-safety"; 
 import { sustainableDevelopmentData } from "./general/sustainable-development"; 
@@ -55,10 +54,10 @@ import {powerElectronicsData} from "./electrical/power-electronics";
 import { laborLawData } from "./general/labor-law"; // 1. import เพิ่มตรงนี้
 import { firstAidServiceData } from "./hospital-business/first-aid-service"; // 2. import เพิ่มตรงนี้
 import {medicalEquipmentData} from "./hospital-business/medical-equipment"; // 3. import เพิ่มตรงนี้
+import {thaiCommunicationData} from "./general/thai-communication"; // 4. import เพิ่มตรงนี้
 export const courses = [
   
   appliedProgrammingData,
-  thaiCommunicationData,
   englishCommunicationData, 
   healthSafetyData,
   sustainableDevelopmentData,
@@ -113,6 +112,7 @@ export const courses = [
   laborLawData, // 27. เพิ่มเข้ามาในอาร์เรย์หลัก
   firstAidServiceData, // 28. เพิ่มเข้ามาในอาร์เรย์หลัก
   medicalEquipmentData, // 29. เพิ่มเข้ามาในอาร์เรย์หลัก
+  thaiCommunicationData, // 30. เพิ่มเข้ามาในอาร์เรย์หลัก
 ];
 
 export const categories = [
