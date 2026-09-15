@@ -55,7 +55,7 @@ export default function TeacherProfilePage() {
   // ฟังก์ชันแสดงป๊อปอัปดูรูปโปรไฟล์ขนาดใหญ่
   const handlePreviewAvatar = () => {
     if (!teacherInfo.avatarUrl) return;
-    
+
     Swal.fire({
       imageUrl: teacherInfo.avatarUrl,
       imageAlt: "Teacher Profile Large",
@@ -214,10 +214,10 @@ export default function TeacherProfilePage() {
 
       <Navbar />
       <div style={{ display: "flex", gap: 28, maxWidth: 1100, margin: "0 auto", padding: isMobile ? "16px" : "36px 24px", flexDirection: isMobile ? "column" : "row", alignItems: "flex-start" }}>
-        
+
         {/* Sidebar ครู */}
         <aside style={{ width: isMobile ? "100%" : 280, flexShrink: 0, background: "#fff", borderRadius: 20, border: "1px solid #e2e8f0", padding: "28px 20px", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.04)", position: isMobile ? "static" : "sticky", top: 88 }}>
-          
+
           {/* ส่วนการแสดงผลรูปภาพโปรไฟล์จริง */}
           <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
             {teacherInfo.avatarUrl ? (
@@ -257,7 +257,7 @@ export default function TeacherProfilePage() {
             👨‍🏫 คุณครูผู้สอนในระบบ
           </span>
           <hr style={{ border: "none", borderTop: "1px solid #f1f5f9", margin: "0 0 18px" }} />
-          
+
           <div style={{ textAlign: "left", marginBottom: 14, background: "#f8fafc", padding: "12px", borderRadius: "12px", border: "1px solid #f1f5f9" }}>
             <p style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, margin: "0 0 2px" }}>สาขา / แผนกวิชา</p>
             <p style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", margin: "0 0 12px 0" }}>⚡ {teacherInfo.major}</p>
@@ -300,6 +300,36 @@ export default function TeacherProfilePage() {
               📅 จัดการตารางเรียนกลาง
             </button>
           )}
+
+          {/* 🔗 ปุ่มทางลัดเพิ่มลิงก์ข้อสอบ: แสดงให้คุณครูทุกคนเห็น อยู่เหนือปุ่มออกจากระบบ */}
+          <button
+            onClick={() => navigate("/Homepage")} // สมมุติว่า Route หน้าลิงก์ข้อสอบคุณตั้งชื่อว่า /Homepage
+            style={{
+              width: "100%",
+              padding: "10px 14px",
+              background: "#eff6ff",
+              color: "#2563eb",
+              border: "1px solid #bfdbfe",
+              borderRadius: "12px",
+              fontSize: "13px",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              marginBottom: "10px",
+              transition: "all 0.2s"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#dbeafe";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#eff6ff";
+            }}
+          >
+            🔗 เพิ่มลิงก์ข้อสอบ
+          </button>
 
           {/* 🚪 ปุ่มออกจากระบบ */}
           <button
@@ -346,7 +376,7 @@ export default function TeacherProfilePage() {
                 <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600, textAlign: "right" }}>เครื่องมือจัดการ</span>
               </div>
             )}
-            
+
             {loading ? (
               <p style={{ textAlign: "center", padding: "40px 0", color: "#64748b", fontSize: 14, background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0" }}>กำลังโหลดข้อมูลรายวิชา...</p>
             ) : myTeachingCourses.length === 0 ? (
