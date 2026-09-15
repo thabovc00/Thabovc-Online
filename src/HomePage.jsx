@@ -16,6 +16,23 @@ export default function HomePage() {
     alignItems: "flex-start"
   };
 
+  // สไตล์สำหรับปุ่มสอบ (Exam CTA)
+  const examButtonStyle = {
+    flex: "1 1 220px",
+    maxWidth: "280px",
+    background: "#ffffff",
+    border: "2px solid #e2e8f0",
+    borderRadius: "24px",
+    padding: "28px 24px",
+    cursor: "pointer",
+    textAlign: "center",
+    transition: "all 0.25s ease",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "10px"
+  };
+
   return (
     <div style={{ backgroundColor: "#f8fafc", minHeight: "100vh", color: "#334155", fontFamily: "'Sarabun', sans-serif" }}>
       <Navbar />
@@ -36,12 +53,277 @@ export default function HomePage() {
           ห้องเรียนออนไลน์ <br/>
           <span style={{ color: "#3b82f6" }}>วิทยาลัยเทคโนโลยีวิชาชีพท่าบ่อ</span>
         </h1>
-        <p style={{ fontSize: "18px", color: "#64748b", maxWidth: "600px", margin: "0 auto 40px", lineHeight: "1.7" }}>
+        <p style={{ fontSize: "18px", color: "#64748b", maxWidth: "600px", margin: "0 auto", lineHeight: "1.7" }}>
           ศูนย์รวมความรู้ออนไลน์ที่เข้าถึงง่ายที่สุด <br/>
           เรียนรู้ได้ทันทีทุกที่ทุกเวลา ไม่ต้องมีบัญชีผู้ใช้
         </p>
+      </section>
 
-        {/* ── ปุ่มเข้าเรียนหลัก (Primary CTA) ── */}
+      {/* ── ส่วนลิงก์สอบกลางภาค / ปลายภาค ── */}
+      {/* ── ส่วนการสอบกลางภาค / ปลายภาค ── */}
+<section style={{ padding: "10px 24px 50px" }}>
+  <div
+    style={{
+      maxWidth: "900px",
+      margin: "0 auto",
+      background:
+        "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+      borderRadius: "32px",
+      padding: "48px 32px",
+      textAlign: "center",
+      boxShadow: "0 20px 45px rgba(15, 23, 42, 0.18)",
+      position: "relative",
+      overflow: "hidden",
+    }}
+  >
+    {/* แสงตกแต่งด้านบน */}
+    <div
+      style={{
+        position: "absolute",
+        width: "180px",
+        height: "180px",
+        borderRadius: "50%",
+        background: "rgba(59, 130, 246, 0.15)",
+        top: "-80px",
+        right: "-50px",
+      }}
+    />
+
+    <div
+      style={{
+        position: "absolute",
+        width: "140px",
+        height: "140px",
+        borderRadius: "50%",
+        background: "rgba(245, 158, 11, 0.10)",
+        bottom: "-70px",
+        left: "-40px",
+      }}
+    />
+
+    {/* หัวข้อ */}
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
+        background: "#ffffff",
+        color: "#0f172a",
+        padding: "8px 20px",
+        borderRadius: "100px",
+        fontSize: "14px",
+        fontWeight: "800",
+        marginBottom: "18px",
+      }}
+    >
+      📝 ระบบการสอบออนไลน์
+    </div>
+
+    <h2
+      style={{
+        color: "#ffffff",
+        fontSize: "clamp(24px, 4vw, 30px)",
+        fontWeight: "800",
+        marginBottom: "10px",
+      }}
+    >
+      เข้าสู่การสอบ
+    </h2>
+
+    <p
+      style={{
+        color: "#cbd5e1",
+        fontSize: "15px",
+        lineHeight: "1.7",
+        marginBottom: "8px",
+      }}
+    >
+      กรุณาเลือกรอบสอบที่ต้องการทำข้อสอบ
+    </p>
+
+    {/* ข้อความแนะนำให้คลิก */}
+    <div
+      style={{
+        display: "inline-block",
+        marginBottom: "30px",
+        padding: "8px 18px",
+        borderRadius: "100px",
+        background: "rgba(255,255,255,0.08)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        color: "#fbbf24",
+        fontSize: "14px",
+        fontWeight: "700",
+      }}
+    >
+      👆 คลิกที่ปุ่มด้านล่างเพื่อเข้าสู่การสอบ
+    </div>
+
+    {/* ปุ่มสอบ */}
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        gap: "20px",
+      }}
+    >
+      {/* ── สอบกลางภาค ── */}
+      <button
+        onClick={() => navigate("/exam-midterm")}
+        style={{
+          ...examButtonStyle,
+          border: "3px solid #3b82f6",
+          boxShadow: "0 10px 25px rgba(59, 130, 246, 0.15)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "#60a5fa";
+          e.currentTarget.style.transform = "translateY(-6px)";
+          e.currentTarget.style.boxShadow =
+            "0 18px 35px rgba(59, 130, 246, 0.25)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "#3b82f6";
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow =
+            "0 10px 25px rgba(59, 130, 246, 0.15)";
+        }}
+      >
+        <div
+          style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "20px",
+            background: "#eff6ff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "34px",
+          }}
+        >
+          📝
+        </div>
+
+        <div
+          style={{
+            fontSize: "20px",
+            fontWeight: "800",
+            color: "#0f172a",
+          }}
+        >
+          สอบกลางภาค
+        </div>
+
+        <div
+          style={{
+            fontSize: "13px",
+            color: "#64748b",
+          }}
+        >
+          Midterm Examination
+        </div>
+
+        <div
+          style={{
+            marginTop: "4px",
+            padding: "8px 18px",
+            borderRadius: "100px",
+            background: "#3b82f6",
+            color: "#ffffff",
+            fontSize: "13px",
+            fontWeight: "700",
+          }}
+        >
+          คลิกเพื่อเข้าสอบ →
+        </div>
+      </button>
+
+      {/* ── สอบปลายภาค ── */}
+      <button
+        onClick={() => navigate("/exam-final")}
+        style={{
+          ...examButtonStyle,
+          border: "3px solid #f59e0b",
+          boxShadow: "0 10px 25px rgba(245, 158, 11, 0.15)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "#fbbf24";
+          e.currentTarget.style.transform = "translateY(-6px)";
+          e.currentTarget.style.boxShadow =
+            "0 18px 35px rgba(245, 158, 11, 0.25)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "#f59e0b";
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow =
+            "0 10px 25px rgba(245, 158, 11, 0.15)";
+        }}
+      >
+        <div
+          style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "20px",
+            background: "#fffbeb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "34px",
+          }}
+        >
+          📄
+        </div>
+
+        <div
+          style={{
+            fontSize: "20px",
+            fontWeight: "800",
+            color: "#0f172a",
+          }}
+        >
+          สอบปลายภาค
+        </div>
+
+        <div
+          style={{
+            fontSize: "13px",
+            color: "#64748b",
+          }}
+        >
+          Final Examination
+        </div>
+
+        <div
+          style={{
+            marginTop: "4px",
+            padding: "8px 18px",
+            borderRadius: "100px",
+            background: "#f59e0b",
+            color: "#ffffff",
+            fontSize: "13px",
+            fontWeight: "700",
+          }}
+        >
+          คลิกเพื่อเข้าสอบ →
+        </div>
+      </button>
+    </div>
+
+    {/* ข้อความด้านล่าง */}
+    <p
+      style={{
+        marginTop: "28px",
+        marginBottom: 0,
+        color: "#94a3b8",
+        fontSize: "13px",
+      }}
+    >
+      💡 เลือกประเภทการสอบ แล้วเลือกสาขาวิชาและระดับชั้นของคุณ
+    </p>
+  </div>
+</section>
+
+      {/* ── ปุ่มเข้าเรียนหลัก (Primary CTA) ── */}
+      <section style={{ padding: "0 24px 60px", textAlign: "center" }}>
         <button
           onClick={() => navigate("/courses")}
           style={{

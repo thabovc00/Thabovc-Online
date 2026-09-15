@@ -4,7 +4,8 @@ import CourseDetail from "./CourseDetail";
 import HomePage from "./HomePage";
 import ContactPage from "./ContactPage";
 import AnnouncementPage from "./AnnouncementPage";
-
+import ExamMidterm from "./ExamMidterm"; // เพิ่มการนำเข้า ExamMidterm
+import ExamFinal from "./ExamFinal"; // เพิ่มการนำเข้า ExamFinal
 // Import โซน Components
 import Login from "./components/Login"; 
 import Register from "./components/Register"; 
@@ -18,7 +19,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* ✅ บังคับให้หน้าแรกสุด (/) เป็นหน้าคอร์สเรียนตามที่ต้องการ */}
-        <Route path="/" element={<CoursesPage />} /> 
+        <Route path="/" element={<HomePage />} />
         
         {/* เส้นทางอื่นๆ สำหรับเข้าหน้า Login และ Register */}
         <Route path="/login" element={<Login />} />
@@ -32,6 +33,8 @@ function App() {
         <Route path="/AnnouncementPage" element={<AnnouncementPage />} />
         <Route path="/teacher-profile" element={<TeacherProfilePage />} />
         <Route path="/schedule" element={<ScheduleTable />} />
+        <Route path="/exam-midterm" element={<ExamMidterm />} /> {/* เพิ่มเส้นทางสำหรับ ExamMidterm */}
+        <Route path="/exam-final" element={<ExamFinal />} /> {/* เพิ่มเส้นทางสำหรับ ExamFinal */}
         {/* หน้าข้อมูลส่วนตัว */}
         <Route path="/profile" element={<ProfilePage />} /> 
         
